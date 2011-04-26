@@ -306,8 +306,90 @@ void buildWMatrixBilinearInterpolation(int N_imgs, int N_rows_upimg, int N_cols_
 
     }
 
+    // Add last element as Nnz in the row index matrix
 }
 
 
+void buildDMatrixLebesgueMeasure(int N_imgs, int N_rows_low_img, int N_cols_upimg, float** DMatvalPtr, int** DMatrowPtr, int** DMatcolPtr)
+{
 
+    for (int img_no = 1 ; img_no <= N_imgs ; img_no++)
+    {
+
+        int row_index = 1;
+        float prev_row = 0;
+
+        for(float row_increment = 0; row_increment <= N_rows_upimg-1 ; row_increment+=scale_factor)
+        {
+
+             int prev_row_int = (int)(ceil(prev_row));
+             int curr_row_int = (int)(ceil(row_increment));
+             float row_vec[curr_row_int-prev_row_int+1];
+             row_vec[0] = 1 - left_over_row;
+             for (int i = 1; i < curr_row_int-prev_row_int ; i++ )
+             {
+                 row_vec[i] = 1;
+                 sum_row_vec += 1;
+             }
+             row_vec[curr_row_int-prev_row_int] = scale_factor-sum_row_vec;
+
+
+            for(float col_increment = 0; col_increment <= N_cols_upimg-1 ; col_increment+=scale_factor)
+            {
+
+
+
+                int prev_col_int = (int)(ceil(prev_col));
+                int curr_col_int = (int)(ceil(col_increment));
+
+                float col_vec[curr_col_int-prev_col_int+1];
+
+                col_vec[0] = 1 - left_over_col;
+
+                sum_row_vec = row_vec[0];
+
+                for (int i = 1; i < curr_col_int-prev_col_int ; i++ )
+                {
+                    col_vec[i] = 1;
+                    sum_col_vec += 1;
+                }
+                col_vec[curr_col_int-prev_col_int] = scale_factor-sum_col_vec;
+
+
+                TooN::Vector<float> row_vector(row_vec);
+                TooN::Vector<float> col_vector(col_vec);
+
+                TooN::Matrix<>weightMat = row_vector.as_col()*col_vector.as_row();
+
+                int sum = 0 ;
+                for (int row_mat = 0 ; row_mat < weightMat.num_rows() ; row_mat++)
+                {
+                    for (int col_mat = 0 ; col_mat < weightMat.num_cols() ; col_mat++)
+                    {
+                        sumMat += weightMat(row_mat,col_mat);
+                    }
+                }
+
+                weightMat = weightMat/ sum;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            }
+        }
+
+    }
+
+}
 

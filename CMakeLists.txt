@@ -41,10 +41,18 @@ FIND_PACKAGE(CVD REQUIRED)
 SET(
   SOURCES
   ./src/kernels/kernel.cu
-  #./src/kernels/p_update.cu
-  #./src/kernels/q_updates.cu
-  #./src/kernels/u_updates.cu
+  ./src/kernels/p_update.cu
+  ./src/kernels/q_updates.cu
+  ./src/kernels/u_updates.cu
  ./src/utils.h
+ #   ./src/flow.h
+ ./src/flow.cpp
+
+ #./src/color_flow.h
+ #./src/color_flow.cpp
+ #./src/colorcode.h
+ #./src/colorcode.cpp
+
 #./src/utils.cpp
 
 )
@@ -95,6 +103,7 @@ LINK_LIBRARIES(
   ${FREEGLUT_LIBRARY}
    libUtilNPP_x86_64.a
    libcutil_x86_64.a
+   ${CUDA_SDK_ROOT_DIR}/../shared/lib/libshrutil_x86_64.a
 
    /usr/local/cuda/lib64/libcusparse.so
   #  -lGVars3

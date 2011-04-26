@@ -21,11 +21,16 @@
 #include <cublas.h>
 
 #include "utils.h"
+#include "flow.h"
+//#include "color_flow.h"
+//#include "colorcode.h"
 
 using namespace std;
 using namespace pangolin;
 using namespace CVD;
 
+//#define TAG_FLOAT 202021.25  // check for this when READING the file
+//#define TAG_STRING "PIEH"
 
 
 
@@ -41,11 +46,11 @@ extern "C" void launch_kernel_derivative_u(float* ux, float *uy, float* u_, unsi
 
 
 
-int width = 512;
-int height = 512;
+int width_window = 512;
+int height_window = 512;
 
 
-int main( int /*argc*/, char* argv[] )
+int main( int argc, char* argv[] )
 {
 
     float L = sqrt(8);
@@ -55,56 +60,108 @@ int main( int /*argc*/, char* argv[] )
 
 
     cudaGLSetGLDevice(cutGetMaxGflopsDeviceId());
-    CreateGlutWindowAndBind("Main",width*2,height*2);
+    CreateGlutWindowAndBind("Main",width_window*2,height_window*2);
     glewInit();
 
-    CVD::Image<float> input_image;
+    CVD::Image<byte> input_image;
 
-    img_load(input_image,"../src/lena_sigma25.png");
+    img_load(input_image,"../data/images/car_001.pgm");
+
+
+    CVD::Image<float>inputimages[N_imgs];
+
+    float** WMatvalPtr, **DMatvalPtr;
+    int** WMatcolPtr, **DMatcolPtr;
+    int** WMatrowPtr, **DMatrowPtr;
+
+    int N_cols_low_img = input_image.size().x;
+    int N_rows_low_img = input_image.size().y;
+
+    int size_have  = N_rows_low_img*N_cols_low_img;
+
+    int scale = 2;
+
+    int N_rows_upimg = (int)(scale*N_rows_low_img);
+    int N_cols_upimg = (int)(scale*N_cols_low_img);
+
+    int size_wanted  = N_rows_upimg*N_cols_upimg;
+
+    int N_rows = size_wanted, Nnz = size_wanted*4, N_imgs= 9, NnzDMat = 4*size_have;
+
+
+
+    WMatvalPtr = (float**)malloc(sizeof(float*)*N_imgs);
+    WMatcolPtr = (int**)malloc(sizeof(int*)*N_imgs);
+    WMatrowPtr = (int**)malloc(sizeof(int*)*N_imgs);
+
+    DMatvalPtr = (float**)malloc(sizeof(float*)*N_imgs);
+    DMatcolPtr = (int**)malloc(sizeof(int*)*N_imgs);
+    DMatrowPtr = (int**)malloc(sizeof(int*)*N_imgs);
+
+    for (int i = 0 ; i < N_imgs; i++)
+    {
+        WvalPtr[i] = (float*)malloc(sizeof(float)*Nnz);
+        WcolPtr[i] = (int*)malloc(sizeof(int)*Nnz);
+        WrowPtr[i] = (int*)malloc(sizeof(int)*(N_rows+1));
+
+        DMatvalPtr[i] = (float*)malloc(sizeof(float)*NnzDMat);
+        DMatcolPtr[i] = (int*)malloc(sizeof(int)*NnzDMat);
+        DMatrowPtr[i] = (int*)malloc(sizeof(int)*(N_rows_low_img+1));
+    }
+
+
+    // Check if sparse matrix building is true!
+    {
+        buildWMatrixBilinearInterpolation(N_imgs, N_rows_upimg, N_cols_upimg, WMatvalPtr, WMatrowPtr, WMatcolPtr);
+        buildDMatrixLebesgueMeasure(N_imgs, N_rows_low_img, N_cols_upimg, DMatvalPtr, DMatrowPtr, DMatcolPtr);
+    }
+
+    // Read Input Images;
+    for (int i = 0 ; i < N_imgs; i++)
+    {
+        char filename[30];
+        sprintf(filename,"../data/images/car_%03d.pgm",i+1);
+        img_load(inputimages[i],filename);
+    }
+
 
 
     size_t imagePitchFloat;
-    float * d_data;
-    float* px;
-    float* py;
-    float *ux_, *uy_, *u_, *u;
-    float * input_img_data;
-    float *g;
+    size_t imagePitchInt;
 
-    input_img_data = (float*)malloc(sizeof(float)*width*height);
+    float **d_valPtrW;
+    int **d_colPtrW;
+    int **d_rowPtrW;
+    float **d_inputimages;
 
-    input_img_data = input_image.data();
-
-
-    cutilSafeCall(cudaMallocPitch(&(d_data ), &(imagePitchFloat), width* sizeof (float), height));
-
-    cutilSafeCall(cudaMallocPitch(&(px ), &(imagePitchFloat), width* sizeof (float), height));
-    cutilSafeCall(cudaMallocPitch(&(py ), &(imagePitchFloat), width* sizeof (float), height));
-
-    cutilSafeCall(cudaMallocPitch(&(ux_ ), &(imagePitchFloat), width* sizeof (float), height));
-    cutilSafeCall(cudaMallocPitch(&(uy_ ), &(imagePitchFloat), width* sizeof (float), height));
-
-    cutilSafeCall(cudaMallocPitch(&(u ), &(imagePitchFloat), width* sizeof (float), height));
-    cutilSafeCall(cudaMallocPitch(&(u_ ), &(imagePitchFloat), width* sizeof (float), height));
-
-    cutilSafeCall(cudaMallocPitch(&(g ), &(imagePitchFloat), width* sizeof (float), height));
-
-    cutilSafeCall(cudaMemcpy2D(d_data, imagePitchFloat, input_img_data, sizeof(float)*width, sizeof(float)*width, height, cudaMemcpyHostToDevice));
-    cutilSafeCall(cudaMemcpy2D(g, imagePitchFloat, input_img_data, sizeof(float)*width, sizeof(float)*width, height, cudaMemcpyHostToDevice));
+    float *d_p;
+    float *d_u;
+    float *d_u_;
+    float **d_q;
 
 
+    cutilSafeCall(cudaMallocPitch((d_valPtrW ), &(imagePitchFloat), size_wanted* sizeof (float), N_imgs));
+    cutilSafeCall(cudaMallocPitch((d_colPtrW ), &(imagePitchInt), Nnz* sizeof (int), N_imgs));
+    cutilSafeCall(cudaMallocPitch((d_rowPtrW ), &(imagePitchInt), (N_rows+2)* sizeof (int), N_imgs));
+    cutilSafeCall(cudaMallocPitch((d_inputimages ), &(imagePitchFloat), (size_have)* sizeof(float), N_imgs));
 
-    cutilSafeCall(cudaMemset(px,0,sizeof(float)*width*height));
-    cutilSafeCall(cudaMemset(py,0,sizeof(float)*width*height));
+    cutilSafeCall(cudaMallocPitch(&(d_p ), &(imagePitchFloat), size_wanted* sizeof (float), N_imgs));
+    cutilSafeCall(cudaMallocPitch((d_q ), &(imagePitchFloat), size_wanted* sizeof (float), N_imgs));
 
-    cutilSafeCall(cudaMemset(ux_,0,sizeof(float)*width*height));
-    cutilSafeCall(cudaMemset(uy_,0,sizeof(float)*width*height));
+    cutilSafeCall(cudaMallocPitch(&(d_u ), &(imagePitchFloat), size_wanted* sizeof (float), N_imgs));
+    cutilSafeCall(cudaMallocPitch(&(d_ux_ ), &(imagePitchFloat), size_wanted* sizeof (float), N_imgs));
+    cutilSafeCall(cudaMallocPitch(&(d_uy_ ), &(imagePitchFloat), size_wanted* sizeof (float), N_imgs));
 
-    cutilSafeCall(cudaMemset( u,0,sizeof(float)*width*height));
-    cutilSafeCall(cudaMemset(u_,0,sizeof(float)*width*height));
+    cutilSafeCall(cudaMemcpy2D(d_valPtrW,imagePitchFloat,valPtr,sizeof(float)*size_wanted,sizeof(float)*size_wanted,N_imgs,cudaMemcpyHostToDevice));
+    cutilSafeCall(cudaMemcpy2D(d_colPtrW,imagePitchInt,colPtr,sizeof(int)*Nnz,sizeof(int)*Nnz,N_imgs,cudaMemcpyHostToDevice));
+    cutilSafeCall(cudaMemcpy2D(d_rowPtrW,imagePitchInt,rowPtr,sizeof(int)*(N_rows+1),sizeof(int)*(N_rows+1),N_imgs,cudaMemcpyHostToDevice));
 
+    for (int i = 0 ; i< N_imgs; i++)
+    {
+        cutilSafeCall(cudaMemcpy2D(d_inputimages[i],imagePitchFloat,inputimages[i],sizeof(int)*(size_have),sizeof(int)*(size_have),1,cudaMemcpyHostToDevice));
+    }
 
-    float aspect = width*1.0f/height*1.0f;
+    float aspect = width_window*1.0f/height_window*1.0f;
 
     GlTexture greyTexture(width,height,GL_LUMINANCE32F_ARB);
     GlBufferCudaPtr greypbo( GlPixelUnpackBuffer, width*height*sizeof(float), cudaGraphicsMapFlagsNone, GL_STREAM_DRAW );
@@ -135,8 +192,6 @@ int main( int /*argc*/, char* argv[] )
                    ;
 
 
-
-
     int imageStrideFloat=imagePitchFloat/sizeof(float);
 
     cusparseHandle_t handle = 0;
@@ -158,26 +213,34 @@ int main( int /*argc*/, char* argv[] )
     cusparseSetMatIndexBase(descr,CUSPARSE_INDEX_BASE_ZERO);
 
 
-
     long doIt =0;
     while(!pangolin::ShouldQuit())
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        //static Var<float> lambda_val("ui.lambda_val",10,100);
-        // static Var<bool> doIt("ui.doit",false,false);
 
-        //        lambda = lambda_val;
-
-        //if((doIt))
         {
             if(doIt%100==0){
-                //cout<<"It:" << (doIt/100) <<endl;
 
                     ScopedCuTimer cuTime("Iteration time");
-                    launch_kernel_derivative_u(ux_,uy_,u_,imageStrideFloat,width, height);
-                    launch_kernel_dual_variable_p(px,py,ux_,uy_,sigma,imageStrideFloat,width,height);
-                    launch_kernel_update_u(px,py,u,u_,g,imageStrideFloat,width,height,tau,lambda);
+
+                    launch_kernel_derivative_u(ux_,uy_,u_,imageStrideFloat,N_cols_upimg, N_rows_upimg);
+                    launch_kernel_dual_variable_p(px,py,ux_,uy_,sigma,imageStrideFloat,N_cols_upimg,N_rows_upimg);
+
+                    for (int i = 0 ; i < N_imgs; i++)
+                    {
+                         // use cusparse to find out DBW_u..
+
+                    }
+
+                    launch_kernel_dual_variable_q(N_imgs, q, DBWu_,epsilon_d, sigma, f, xisqr,imageStride, N_cols_upimg, N_rows_upimg);
+
+                    for (int i = 0 ; i < N_imgs; i++)
+                    {
+                         // use cusparse to sum up the qs ..
+                    }
+
+                    launch_kernel_update_u(px,py,u,u_,sum_wiT_biT_diT_q,imageStrideFloat,N_cols_upimg,N_rows_upimg,tau,xisqr);
 
             }
             doIt++;
