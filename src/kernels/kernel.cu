@@ -146,9 +146,6 @@ extern "C" void launch_kernel_dual_variable_p(float *px, float *py, float* ux_, 
     cutilCheckMsg("execution failed\n");
 }
 
-// kernelVBO.cpp (Rob Farber)
-// Simple kernel to modify vertex positions in sine wave pattern
 
-// Wrapper for the __global__ call that sets up the kernel call
 
 #endif // #ifndef _SIMPLEGL_KERNEL_H_
