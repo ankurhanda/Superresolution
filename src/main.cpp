@@ -63,59 +63,142 @@ int main( int argc, char* argv[] )
     CreateGlutWindowAndBind("Main",width_window*2,height_window*2);
     glewInit();
 
-    CVD::Image<byte> input_image;
+    CVD::Image<float> input_image;
 
-    img_load(input_image,"../data/images/car_001.pgm");
+    img_load(input_image,"../data/images/car_001_up.pgm");
+
+    for(int i = 0 ; i < input_image.size().y; i++)
+    {
+        for(int j = 0 ; j < input_image.size().x ; j++)
+        {
+            cout << "val = " << input_image[ImageRef(j,i)] << endl;
+        }
+    }
 
 
-    CVD::Image<float>inputimages[N_imgs];
-
-    float** WMatvalPtr, **DMatvalPtr;
-    int** WMatcolPtr, **DMatcolPtr;
-    int** WMatrowPtr, **DMatrowPtr;
+    float** WMatvalPtr, *DMatvalPtr;
+    int** WMatcolPtr, *DMatcolPtr;
+    int** WMatrowPtr, *DMatrowPtr;
 
     int N_cols_low_img = input_image.size().x;
     int N_rows_low_img = input_image.size().y;
 
     int size_have  = N_rows_low_img*N_cols_low_img;
 
-    int scale = 2;
+    float scale = 2;
 
     int N_rows_upimg = (int)(scale*N_rows_low_img);
     int N_cols_upimg = (int)(scale*N_cols_low_img);
 
     int size_wanted  = N_rows_upimg*N_cols_upimg;
 
-    int N_rows = size_wanted, Nnz = size_wanted*4, N_imgs= 9, NnzDMat = 4*size_have;
+    int N_rows = size_wanted, Nnz = size_wanted*4, N_imgs= 9, NnzDMat = 8*size_have;
+
+//    CVD::Image<float>inputimages[N_imgs];
 
 
+//    WMatvalPtr = (float**)malloc(sizeof(float*)*N_imgs);
+//    WMatcolPtr = (int**)malloc(sizeof(int*)*N_imgs);
+//    WMatrowPtr = (int**)malloc(sizeof(int*)*N_imgs);
 
-    WMatvalPtr = (float**)malloc(sizeof(float*)*N_imgs);
-    WMatcolPtr = (int**)malloc(sizeof(int*)*N_imgs);
-    WMatrowPtr = (int**)malloc(sizeof(int*)*N_imgs);
+    DMatvalPtr = (float*)malloc(sizeof(float*)*NnzDMat);
+    DMatcolPtr = (int*)malloc(sizeof(int*)*NnzDMat);
+    DMatrowPtr = (int*)malloc(sizeof(int*)*(size_have+1));
 
-    DMatvalPtr = (float**)malloc(sizeof(float*)*N_imgs);
-    DMatcolPtr = (int**)malloc(sizeof(int*)*N_imgs);
-    DMatrowPtr = (int**)malloc(sizeof(int*)*N_imgs);
-
-    for (int i = 0 ; i < N_imgs; i++)
-    {
-        WvalPtr[i] = (float*)malloc(sizeof(float)*Nnz);
-        WcolPtr[i] = (int*)malloc(sizeof(int)*Nnz);
-        WrowPtr[i] = (int*)malloc(sizeof(int)*(N_rows+1));
-
-        DMatvalPtr[i] = (float*)malloc(sizeof(float)*NnzDMat);
-        DMatcolPtr[i] = (int*)malloc(sizeof(int)*NnzDMat);
-        DMatrowPtr[i] = (int*)malloc(sizeof(int)*(N_rows_low_img+1));
-    }
+//    for (int i = 0 ; i < N_imgs; i++)
+//    {
+//        WMatvalPtr[i] = (float*)malloc(sizeof(float)*Nnz);
+//        WMatcolPtr[i] = (int*)malloc(sizeof(int)*Nnz);
+//        WMatrowPtr[i] = (int*)malloc(sizeof(int)*(N_rows+1));
+//    }
 
 
     // Check if sparse matrix building is true!
     {
-        buildWMatrixBilinearInterpolation(N_imgs, N_rows_upimg, N_cols_upimg, WMatvalPtr, WMatrowPtr, WMatcolPtr);
-        buildDMatrixLebesgueMeasure(N_imgs, N_rows_low_img, N_cols_upimg, DMatvalPtr, DMatrowPtr, DMatcolPtr);
+        //buildWMatrixBilinearInterpolation(N_imgs, N_rows_upimg, N_cols_upimg, WMatvalPtr, WMatrowPtr, WMatcolPtr);
+//        scale = 2.4;
+        buildDMatrixLebesgueMeasure(NnzDMat, N_rows_low_img, N_rows_upimg, N_cols_upimg, DMatvalPtr, DMatrowPtr, DMatcolPtr, scale);
     }
 
+    cusparseHandle_t handle = 0;
+    cusparseStatus_t status;
+    status = cusparseCreate(&handle);
+    if (status != CUSPARSE_STATUS_SUCCESS) {
+        fprintf( stderr, "!!!! CUSPARSE initialization error\n" );
+        return EXIT_FAILURE;
+    }
+
+
+    cusparseMatDescr_t descr = 0;
+    status = cusparseCreateMatDescr(&descr);
+    if (status != CUSPARSE_STATUS_SUCCESS) {
+        fprintf( stderr, "!!!! CUSPARSE cusparseCreateMatDescr error\n" );
+        return EXIT_FAILURE;
+    }
+    cusparseSetMatType(descr,CUSPARSE_MATRIX_TYPE_GENERAL);
+    cusparseSetMatIndexBase(descr,CUSPARSE_INDEX_BASE_ZERO);
+
+    size_t imagePitchFloat;
+
+    float *d_DMatvalPtr;
+    int *d_DMatcolPtr;
+    int *d_DMatrowPtr;
+    float *d_img;
+    float *d_Ax;
+
+    cutilSafeCall(cudaMalloc((void**)&d_DMatvalPtr, NnzDMat*sizeof (float)));
+    cutilSafeCall(cudaMalloc((void**)&d_DMatcolPtr, NnzDMat*sizeof (int)));
+    cutilSafeCall(cudaMalloc((void**)&d_DMatcolPtr, (size_have+1)*sizeof(int)));
+    cutilSafeCall(cudaMalloc((void**)&d_Ax, size_have*sizeof(float)));
+    cutilSafeCall(cudaMallocPitch(&(d_img ), &(imagePitchFloat), N_cols_upimg* sizeof (float), N_rows_upimg));
+
+
+
+    cudaMemcpy(d_DMatvalPtr, DMatvalPtr, NnzDMat*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_DMatcolPtr, DMatcolPtr, NnzDMat*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_DMatrowPtr, DMatrowPtr, (size_have+1)*sizeof(int), cudaMemcpyHostToDevice);
+
+    cutilSafeCall(cudaMemcpy2D(d_img,imagePitchFloat,input_image.data(),sizeof(float)*N_cols_upimg,sizeof(float)*N_cols_upimg,N_rows_upimg,cudaMemcpyHostToDevice));
+
+    cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_have, size_wanted, 1.0, descr, d_DMatvalPtr, d_DMatrowPtr, d_DMatcolPtr, d_img, 0.0, d_Ax);
+
+    float *h_Ax;
+    h_Ax = (float*)malloc(sizeof(float)*size_have);
+    cudaMemcpy(h_Ax,d_Ax,sizeof(float)*size_have,cudaMemcpyDeviceToHost);
+
+    ofstream ofile("downsampled_image.txt");
+    for (int i = 0 ; i < size_wanted;i++)
+    {
+        ofile<< h_Ax[i] << " ";
+    }
+    ofile << endl;
+
+
+//    cusparseScsr2dense(handle,size_have,size_wanted,descr,d_DMatvalPtr,d_DMatrowPtr,d_DMatcolPtr,d_A,size_have);
+
+
+//    float *h_A;
+
+//    h_A = (float*)malloc(sizeof(float)*size_wanted*size_have);
+
+//    cudaMemcpy(h_A,d_A,sizeof(float)*size_wanted*size_have,cudaMemcpyDeviceToHost);
+
+//    ofstream ofile("D.txt");
+//    for(int i = 0 ; i < size_wanted*size_have; i++)
+//    {
+//         ofile << h_A[i] << " ";
+//    }
+//    ofile << endl;
+//    ofile.close();
+
+
+//    cutilSafeCall(cudaMemcpy2D();
+
+
+
+
+
+    /*
     // Read Input Images;
     for (int i = 0 ; i < N_imgs; i++)
     {
@@ -126,7 +209,6 @@ int main( int argc, char* argv[] )
 
 
 
-    size_t imagePitchFloat;
     size_t imagePitchInt;
 
     float **d_valPtrW;
@@ -160,8 +242,13 @@ int main( int argc, char* argv[] )
     {
         cutilSafeCall(cudaMemcpy2D(d_inputimages[i],imagePitchFloat,inputimages[i],sizeof(int)*(size_have),sizeof(int)*(size_have),1,cudaMemcpyHostToDevice));
     }
+    */
 
-    float aspect = width_window*1.0f/height_window*1.0f;
+    int width = input_image.size().x;
+    int height = input_image.size().y;
+
+    float aspect = width*1.0f/height*1.0f;
+
 
     GlTexture greyTexture(width,height,GL_LUMINANCE32F_ARB);
     GlBufferCudaPtr greypbo( GlPixelUnpackBuffer, width*height*sizeof(float), cudaGraphicsMapFlagsNone, GL_STREAM_DRAW );
@@ -194,23 +281,7 @@ int main( int argc, char* argv[] )
 
     int imageStrideFloat=imagePitchFloat/sizeof(float);
 
-    cusparseHandle_t handle = 0;
-    cusparseStatus_t status;
-    status = cusparseCreate(&handle);
-    if (status != CUSPARSE_STATUS_SUCCESS) {
-        fprintf( stderr, "!!!! CUSPARSE initialization error\n" );
-        return EXIT_FAILURE;
-    }
 
-
-    cusparseMatDescr_t descr = 0;
-    status = cusparseCreateMatDescr(&descr);
-    if (status != CUSPARSE_STATUS_SUCCESS) {
-        fprintf( stderr, "!!!! CUSPARSE cusparseCreateMatDescr error\n" );
-        return EXIT_FAILURE;
-    }
-    cusparseSetMatType(descr,CUSPARSE_MATRIX_TYPE_GENERAL);
-    cusparseSetMatIndexBase(descr,CUSPARSE_INDEX_BASE_ZERO);
 
 
     long doIt =0;
@@ -220,42 +291,42 @@ int main( int argc, char* argv[] )
 
 
         {
-            if(doIt%100==0){
+//            if(doIt%100==0){
 
-                    ScopedCuTimer cuTime("Iteration time");
+//                    ScopedCuTimer cuTime("Iteration time");
 
-                    launch_kernel_derivative_u(ux_,uy_,u_,imageStrideFloat,N_cols_upimg, N_rows_upimg);
-                    launch_kernel_dual_variable_p(px,py,ux_,uy_,sigma,imageStrideFloat,N_cols_upimg,N_rows_upimg);
+//                    launch_kernel_derivative_u(ux_,uy_,u_,imageStrideFloat,N_cols_upimg, N_rows_upimg);
+//                    launch_kernel_dual_variable_p(px,py,ux_,uy_,sigma,imageStrideFloat,N_cols_upimg,N_rows_upimg);
 
-                    for (int i = 0 ; i < N_imgs; i++)
-                    {
-                         // use cusparse to find out DBW_u..
+//                    for (int i = 0 ; i < N_imgs; i++)
+//                    {
+//                         // use cusparse to find out DBW_u..
 
-                    }
+//                    }
 
-                    launch_kernel_dual_variable_q(N_imgs, q, DBWu_,epsilon_d, sigma, f, xisqr,imageStride, N_cols_upimg, N_rows_upimg);
+//                    launch_kernel_dual_variable_q(N_imgs, q, DBWu_,epsilon_d, sigma, f, xisqr,imageStride, N_cols_upimg, N_rows_upimg);
 
-                    for (int i = 0 ; i < N_imgs; i++)
-                    {
-                         // use cusparse to sum up the qs ..
-                    }
+//                    for (int i = 0 ; i < N_imgs; i++)
+//                    {
+//                         // use cusparse to sum up the qs ..
+//                    }
 
-                    launch_kernel_update_u(px,py,u,u_,sum_wiT_biT_diT_q,imageStrideFloat,N_cols_upimg,N_rows_upimg,tau,xisqr);
+//                    launch_kernel_update_u(px,py,u,u_,sum_wiT_biT_diT_q,imageStrideFloat,N_cols_upimg,N_rows_upimg,tau,xisqr);
 
-            }
-            doIt++;
+//            }
+//            doIt++;
 
             //do some display stuff
             {
 
-                view_image0.ActivateScissorAndClear();
-                DisplayFloatDeviceMem(&view_image0, d_data,imagePitchFloat, greypbo,greyTexture);
+//                view_image0.ActivateScissorAndClear();
+//                DisplayFloatDeviceMem(&view_image0, d_Ax,imagePitchFloat, greypbo,greyTexture);
 
-                view_image1.ActivateScissorAndClear();
-                DisplayFloatDeviceMem(&view_image1, ux_,imagePitchFloat, greypbo,greyTexture);
+//                view_image1.ActivateScissorAndClear();
+//                DisplayFloatDeviceMem(&view_image1, d_img,imagePitchFloat, greypbo,greyTexture);
 
-                view_image2.ActivateScissorAndClear();
-                DisplayFloatDeviceMem(&view_image2, u,imagePitchFloat, greypbo,greyTexture);
+//                view_image2.ActivateScissorAndClear();
+//                DisplayFloatDeviceMem(&view_image2, d_img,imagePitchFloat, greypbo,greyTexture);
 
             }
         }
@@ -267,7 +338,6 @@ int main( int argc, char* argv[] )
         glutSwapBuffers();
         glutMainLoopEvent();
     }
-
 
     return 0;
 }
