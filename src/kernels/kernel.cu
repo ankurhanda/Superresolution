@@ -33,14 +33,15 @@
 ////! @param data  data in global memory
 /////////////////////////////////////////////////////////////////////////////////
 
-__global__ void kernel(float *var, unsigned int stride, unsigned int width, unsigned int height)
-{
-    unsigned int x = blockIdx.x*blockDim.x + threadIdx.x;
-    unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
+//__global__ void kernel(int *d_Darray, int size)
+//{
+////    unsigned int x = blockIdx.x*blockDim.x + threadIdx.x;
+////    unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
 
-    // write output vertex
-    var[y*stride+x] = var[y*stride+x];
-}
+//    // write output vertex
+
+////    printf("d_Darray[%d]= %d",threadIdx.x,d_Darray[threadIdx.x]);
+//}
 
 
 __global__ void kernel_dualp(float *px, float *py, float *ux_, float *uy_, float sigma, unsigned int stride, unsigned int width, unsigned int height)
@@ -145,6 +146,15 @@ extern "C" void launch_kernel_dual_variable_p(float *px, float *py, float* ux_, 
     kernel_dualp<<< grid, block>>>(px,py,ux_,uy_,sigma, stride, mesh_width, mesh_height);
     cutilCheckMsg("execution failed\n");
 }
+
+//extern "C" void launch_kernel(int *d_Darray, int size)
+//{
+//    dim3 block(size,1,1);
+//    dim3 grid(1,1);
+//    kernel<<< grid, block>>>(d_Darray,size);
+//    cutilCheckMsg("execution failed\n");
+//}
+
 
 
 

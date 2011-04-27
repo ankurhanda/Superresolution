@@ -43,6 +43,7 @@ extern "C" void launch_kernel_dual_variable_p(float *px, float *py, float* ux_, 
 
 extern "C" void launch_kernel_derivative_u(float* ux, float *uy, float* u_, unsigned int stride, unsigned int mesh_width, unsigned int mesh_height);
 
+//extern "C" void launch_kernel(int *d_Darray, int size);
 
 
 
@@ -52,6 +53,8 @@ int height_window = 512;
 
 int main( int argc, char* argv[] )
 {
+
+    //buildWMatrixBilinearInterpolation(N_imgs, N_rows_upimg, N_cols_upimg, WMatvalPtr, WMatrowPtr, WMatcolPtr);
 
     float L = sqrt(8);
     float tau = 1.0f/L;
@@ -65,59 +68,37 @@ int main( int argc, char* argv[] )
 
     CVD::Image<float> input_image;
 
-    img_load(input_image,"../data/images/car_001_up.pgm");
+    img_load(input_image,"../data/images/car_001.pgm");
 
-    for(int i = 0 ; i < input_image.size().y; i++)
-    {
-        for(int j = 0 ; j < input_image.size().x ; j++)
-        {
-            cout << "val = " << input_image[ImageRef(j,i)] << endl;
-        }
-    }
-
-
-    float** WMatvalPtr, *DMatvalPtr;
-    int** WMatcolPtr, *DMatcolPtr;
-    int** WMatrowPtr, *DMatrowPtr;
-
-    int N_cols_low_img = input_image.size().x;
-    int N_rows_low_img = input_image.size().y;
+    int N_cols_low_img = 4;
+    int N_rows_low_img = 4;
 
     int size_have  = N_rows_low_img*N_cols_low_img;
-
     float scale = 2;
 
     int N_rows_upimg = (int)(scale*N_rows_low_img);
     int N_cols_upimg = (int)(scale*N_cols_low_img);
-
     int size_wanted  = N_rows_upimg*N_cols_upimg;
-
-    int N_rows = size_wanted, Nnz = size_wanted*4, N_imgs= 9, NnzDMat = 8*size_have;
-
-//    CVD::Image<float>inputimages[N_imgs];
+    int NnzDMat = 4*size_have;
 
 
-//    WMatvalPtr = (float**)malloc(sizeof(float*)*N_imgs);
-//    WMatcolPtr = (int**)malloc(sizeof(int*)*N_imgs);
-//    WMatrowPtr = (int**)malloc(sizeof(int*)*N_imgs);
+    float *DMatvalPtr = new float[NnzDMat];
+    int *DMatcolPtr = new int[NnzDMat];
+    int *DMatrowPtr = new int[size_have+1];
 
-    DMatvalPtr = (float*)malloc(sizeof(float*)*NnzDMat);
-    DMatcolPtr = (int*)malloc(sizeof(int*)*NnzDMat);
-    DMatrowPtr = (int*)malloc(sizeof(int*)*(size_have+1));
+    TooN::Matrix<>A(size_have,size_wanted);
+    A = TooN::Zeros(size_have,size_wanted);
+    buildDMatrixLebesgueMeasure(NnzDMat, size_have, N_rows_upimg, N_cols_upimg, DMatvalPtr, DMatrowPtr, DMatcolPtr, scale, A);
 
-//    for (int i = 0 ; i < N_imgs; i++)
-//    {
-//        WMatvalPtr[i] = (float*)malloc(sizeof(float)*Nnz);
-//        WMatcolPtr[i] = (int*)malloc(sizeof(int)*Nnz);
-//        WMatrowPtr[i] = (int*)malloc(sizeof(int)*(N_rows+1));
-//    }
-
-
-    // Check if sparse matrix building is true!
+    for(int i = 0; i < size_have+1 ; i++)
     {
-        //buildWMatrixBilinearInterpolation(N_imgs, N_rows_upimg, N_cols_upimg, WMatvalPtr, WMatrowPtr, WMatcolPtr);
-//        scale = 2.4;
-        buildDMatrixLebesgueMeasure(NnzDMat, N_rows_low_img, N_rows_upimg, N_cols_upimg, DMatvalPtr, DMatrowPtr, DMatcolPtr, scale);
+        cout << DMatrowPtr[i] << " ";
+    }
+    cout << endl;
+
+    for(int i = 0 ; i < NnzDMat; i++)
+    {
+        cout << DMatcolPtr[i] << " ";
     }
 
     cusparseHandle_t handle = 0;
@@ -144,12 +125,21 @@ int main( int argc, char* argv[] )
     int *d_DMatcolPtr;
     int *d_DMatrowPtr;
     float *d_img;
-    float *d_Ax;
+    float *d_A;
+    float *d_A_copy;
+    float *h_A;
+
 
     cutilSafeCall(cudaMalloc((void**)&d_DMatvalPtr, NnzDMat*sizeof (float)));
+
     cutilSafeCall(cudaMalloc((void**)&d_DMatcolPtr, NnzDMat*sizeof (int)));
-    cutilSafeCall(cudaMalloc((void**)&d_DMatcolPtr, (size_have+1)*sizeof(int)));
-    cutilSafeCall(cudaMalloc((void**)&d_Ax, size_have*sizeof(float)));
+
+    cutilSafeCall(cudaMalloc((void**)&d_DMatrowPtr, (size_have+1)*sizeof(int)));
+
+    cutilSafeCall(cudaMalloc((void**)&d_A, (size_have)*sizeof(float)*size_wanted));
+    cutilSafeCall(cudaMalloc((void**)&d_A_copy, (size_have)*sizeof(float)*size_wanted));
+
+
     cutilSafeCall(cudaMallocPitch(&(d_img ), &(imagePitchFloat), N_cols_upimg* sizeof (float), N_rows_upimg));
 
 
@@ -158,41 +148,98 @@ int main( int argc, char* argv[] )
     cudaMemcpy(d_DMatcolPtr, DMatcolPtr, NnzDMat*sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(d_DMatrowPtr, DMatrowPtr, (size_have+1)*sizeof(int), cudaMemcpyHostToDevice);
 
-    cutilSafeCall(cudaMemcpy2D(d_img,imagePitchFloat,input_image.data(),sizeof(float)*N_cols_upimg,sizeof(float)*N_cols_upimg,N_rows_upimg,cudaMemcpyHostToDevice));
 
-    cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_have, size_wanted, 1.0, descr, d_DMatvalPtr, d_DMatrowPtr, d_DMatcolPtr, d_img, 0.0, d_Ax);
 
-    float *h_Ax;
-    h_Ax = (float*)malloc(sizeof(float)*size_have);
-    cudaMemcpy(h_Ax,d_Ax,sizeof(float)*size_have,cudaMemcpyDeviceToHost);
 
-    ofstream ofile("downsampled_image.txt");
-    for (int i = 0 ; i < size_wanted;i++)
+
+    int* h_nnzPerRow;
+    int* d_nnzPerRow;
+
+    float* d_csrValA;
+    float* h_csrValA;
+
+    int* d_csrRowPtrA;
+    int* h_csrRowPtrA;
+
+    int* d_csrColIndA;
+    int* h_csrColIndA;
+
+
+    cutilSafeCall(cudaMalloc((void**)&d_nnzPerRow, size_have*sizeof (int)));
+    cutilSafeCall(cudaMalloc((void**)&d_csrRowPtrA, (size_have+1)*sizeof (int)));
+    cutilSafeCall(cudaMalloc((void**)&d_csrColIndA, NnzDMat*sizeof (int)));
+    cutilSafeCall(cudaMalloc((void**)&d_csrValA, NnzDMat*sizeof (float)));
+
+
+    h_nnzPerRow  = (int*)malloc(sizeof(int)*size_have);
+    h_csrValA    = (float*)malloc(sizeof(float)*NnzDMat);
+    h_csrRowPtrA = (int*)malloc(sizeof(int)*(size_have+1));
+    h_csrColIndA = (int*)malloc(sizeof(int)*size_have);
+    h_A          = (float*)malloc(sizeof(float)*size_have*size_wanted);
+
+    for (int i  = 0 ; i < size_have;i++)
+        h_nnzPerRow[i] = 4;
+
+    int index = 0;
+    for(int i = 0 ; i < size_have ; i++)
     {
-        ofile<< h_Ax[i] << " ";
+        for(int j = 0 ; j < size_wanted; j++)
+        {
+//            static int index = 0;
+            index = j*size_have+i;
+            h_A[index] = A(i,j);
+            index++;
+        }
     }
-    ofile << endl;
+
+    cudaMemcpy(d_A,h_A,sizeof(float)*size_have*size_wanted,cudaMemcpyHostToDevice );
+    cudaMemcpy(d_nnzPerRow,h_nnzPerRow,sizeof(int)*size_have,cudaMemcpyHostToDevice );
 
 
-//    cusparseScsr2dense(handle,size_have,size_wanted,descr,d_DMatvalPtr,d_DMatrowPtr,d_DMatcolPtr,d_A,size_have);
+   cusparseSdense2csr(handle,size_have,size_wanted,descr,d_A,size_have,d_nnzPerRow,d_csrValA,d_csrRowPtrA,d_csrColIndA);
+
+   cudaMemcpy(h_csrValA,d_csrValA,sizeof(float)*NnzDMat,cudaMemcpyDeviceToHost );
+   cudaMemcpy(h_csrRowPtrA,d_csrRowPtrA,sizeof(int)*(size_have+1),cudaMemcpyDeviceToHost );
+   cudaMemcpy(h_csrColIndA,d_csrColIndA,sizeof(int)*NnzDMat,cudaMemcpyDeviceToHost );
 
 
-//    float *h_A;
+   cout <<"\n Here is the csrRowPtr at Host" << endl;
+   for(int i = 0 ; i < size_have+1; i++)
+   {
+       cout << h_csrRowPtrA[i]<<" ";
+   }
+   cout << endl;
 
-//    h_A = (float*)malloc(sizeof(float)*size_wanted*size_have);
-
-//    cudaMemcpy(h_A,d_A,sizeof(float)*size_wanted*size_have,cudaMemcpyDeviceToHost);
-
-//    ofstream ofile("D.txt");
-//    for(int i = 0 ; i < size_wanted*size_have; i++)
-//    {
-//         ofile << h_A[i] << " ";
-//    }
-//    ofile << endl;
-//    ofile.close();
+   for(int i = 0 ; i < NnzDMat ; i++)
+   {
+       cout << h_csrColIndA[i] << " ";
+   }
+   cout << endl;
 
 
-//    cutilSafeCall(cudaMemcpy2D();
+    cusparseStatus_t status_t;
+
+    status_t = cusparseScsr2dense(handle,size_have,size_wanted,descr,d_csrValA,d_csrRowPtrA,d_csrColIndA,d_A_copy,size_have);
+
+    if ( status_t == CUSPARSE_STATUS_SUCCESS)
+    {
+        cout << "Bingo!" << endl;
+    }
+
+
+    float *hh_A;
+
+    hh_A = (float*)malloc(sizeof(float)*size_wanted*size_have);
+
+    cudaMemcpy(hh_A,d_A_copy,sizeof(float)*size_wanted*size_have,cudaMemcpyDeviceToHost);
+    cout << "hh_A copied here" << endl;
+    for(int i = 0 ; i < size_wanted*size_have;i++)
+    {
+        cout << hh_A[i] << " ";
+    }
+    cout << endl;
+    cout << "Copied Data!" << endl;
+
 
 
 
@@ -322,8 +369,8 @@ int main( int argc, char* argv[] )
 //                view_image0.ActivateScissorAndClear();
 //                DisplayFloatDeviceMem(&view_image0, d_Ax,imagePitchFloat, greypbo,greyTexture);
 
-//                view_image1.ActivateScissorAndClear();
-//                DisplayFloatDeviceMem(&view_image1, d_img,imagePitchFloat, greypbo,greyTexture);
+                view_image1.ActivateScissorAndClear();
+                DisplayFloatDeviceMem(&view_image1, d_img,imagePitchFloat, greypbo,greyTexture);
 
 //                view_image2.ActivateScissorAndClear();
 //                DisplayFloatDeviceMem(&view_image2, d_img,imagePitchFloat, greypbo,greyTexture);
