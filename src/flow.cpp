@@ -276,8 +276,8 @@ void buildWMatrixBilinearInterpolation(int N_imgs, int N_rows_upimg, int N_cols_
                 float horizontal_flow = u[col + row*N_cols_upimg];
                 float   vertical_flow = v[col + row*N_cols_upimg];
 
-                float x_ = min(N_cols_upimg*1.0f, max(0.0f,col + horizontal_flow));
-                float y_ = min(N_rows_upimg*1.0f, max(0.0f,row +   vertical_flow));
+                float x_ = min((N_cols_upimg-1)*1.0f, max(0.0f,col + horizontal_flow));
+                float y_ = min((N_rows_upimg-1)*1.0f, max(0.0f,row +   vertical_flow));
 
                 float x_ratio = x_ - floor(x_);
                 float y_ratio = y_ - floor(y_);
@@ -311,7 +311,7 @@ void buildWMatrixBilinearInterpolation(int N_imgs, int N_rows_upimg, int N_cols_
 
 
 void buildDMatrixLebesgueMeasure(int Nnz, int size_have, int size_wanted,int N_rows_upimg, int N_cols_upimg, /*float *DMatvalPtr, int *DMatrowPtr, int *DMatcolPtr,*/
-                                 float scale_factor, TooN::Matrix<>&A, std::map<int, float>& matindex_matval )
+                                 float scale_factor, TooN::Matrix<>&A, std::map<int, float>& matindex_matval, std::map<int, float>&matindex_matvalT )
 {
 
 
@@ -369,8 +369,6 @@ void buildDMatrixLebesgueMeasure(int Nnz, int size_have, int size_wanted,int N_r
                 int prev_col_int = (int)(floor(prev_col));
                 int curr_col_int = (int)(ceil(prev_col+col_increment-1));
 
-
-
                 int col_vec_size = curr_col_int-prev_col_int+1;
 
                 float* col_vec = new float [col_vec_size];
@@ -397,11 +395,11 @@ void buildDMatrixLebesgueMeasure(int Nnz, int size_have, int size_wanted,int N_r
                 {
                     for (int col_mat = 0 ; col_mat < weightMat.num_cols() ; col_mat++)
                     {
-                        sumMat += weightMat(row_mat,col_mat);
+                        sumMat += (weightMat(row_mat,col_mat));
                     }
                 }
 
-                weightMat = weightMat/sumMat;
+//                weightMat = weightMat/(sumMat);
 
 //                {
 //                    DMatrowPtr[row_index] = index;
@@ -414,43 +412,39 @@ void buildDMatrixLebesgueMeasure(int Nnz, int size_have, int size_wanted,int N_r
                         int col_number = (prev_row_int+row_mat)*N_cols_upimg + (prev_col_int+col_mat);
                         if ( index < Nnz)
                         {
-//                            DMatvalPtr[index] = weightMat(row_mat,col_mat)*1.0f;
+                            static float val = 1;
 
-                            float val = 1.0f;
 
-                            A(row_index,col_number)=weightMat(row_mat,col_mat);
-
-//                            cout << "("<<row_index<<","<<col_number<<") = " << val << endl;
-
+                            A(row_index,col_number)= val;//weightMat(row_mat,col_mat);
 
                             int idx = (row_index)*size_wanted + (col_number);
+                            int idx_T = (row_index) + (col_number)*size_have;
 
                             int row_t = idx - (idx/size_have)*size_have;
+                            int row_tT = idx_T - (idx_T/size_wanted)*size_wanted;
+
                             int col_t = (idx - row_t)/size_have;
+                            int col_tT = (idx_T - row_tT)/size_wanted;
 
-//                            cout << "("<<row_index<<","<<col_number<<") transferred to (" << row_t<<", "<<col_t<<")" << endl;
+                            int key  = row_t*size_wanted + col_t;
+                            int keyT = row_tT*size_have + col_tT;
 
-                            int key = row_t*size_wanted + col_t;
+                            matindex_matval[key]   = val;//weightMat(row_mat,col_mat);
+                            matindex_matvalT[keyT] = val;//weightMat(row_mat,col_mat);
 
-                            matindex_matval[key] = weightMat(row_mat,col_mat);
-
-
-//                            DMatcolPtr[index] = col_number*1.0f;
                             index++;
+
+                            val++;
                         }
                     }
                 }
 
                 prev_col= prev_col+col_increment;
-
                 row_index++;
-
-
             }
             prev_row = prev_row + row_increment;
 
         }
-
 //        DMatrowPtr[size_have] = Nnz;
   }
 
