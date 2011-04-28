@@ -418,7 +418,7 @@ void buildDMatrixLebesgueMeasure(int Nnz, int size_have, int size_wanted,int N_r
 
                             float val = 1.0f;
 
-                            A(row_index,col_number)=(val);
+                            A(row_index,col_number)=weightMat(row_mat,col_mat);
 
 //                            cout << "("<<row_index<<","<<col_number<<") = " << val << endl;
 
@@ -432,7 +432,7 @@ void buildDMatrixLebesgueMeasure(int Nnz, int size_have, int size_wanted,int N_r
 
                             int key = row_t*size_wanted + col_t;
 
-                            matindex_matval[key] = (val);
+                            matindex_matval[key] = weightMat(row_mat,col_mat);
 
 
 //                            DMatcolPtr[index] = col_number*1.0f;
