@@ -93,6 +93,7 @@ int main( int argc, char* argv[] )
 
     //DMatvalPtr, DMatrowPtr, DMatcolPtr,
     buildDMatrixLebesgueMeasure(NnzDMat, size_have,size_wanted, N_rows_upimg, N_cols_upimg, scale, A, matindex_matval);
+    cout << "In here" << endl;
 
 //    for(int i = 0; i< NnzDMat ; i++)
 //    {
@@ -104,61 +105,52 @@ int main( int argc, char* argv[] )
 
     std::map<int,float>::iterator it;
     cout << "Map begins " << endl;
-    int index = 0;
+
+    for(int i = 0 ; i < size_have ; i++)
+    {
+        DMatrowPtr[i] = 0;
+    }
+    DMatrowPtr[size_have] = NnzDMat;
+
+    int index = 0, prev_row = -1;
     for(it = matindex_matval.begin(); it != matindex_matval.end(); it++ )
     {
         cout << (it->first)%size_wanted << " " ;//<< it->second << endl;
-//        DMatvalPtr[index] = (it->second);
-//        DMatcolPtr[index] = (it->first);//%size_wanted;
+        DMatvalPtr[index] = (it->second);
+        DMatcolPtr[index] = (it->first)%size_wanted;
+
+        int row = ((it->first) - (it->first)%size_wanted)/size_wanted;
+
+        if ( DMatrowPtr[row] == 0 && prev_row != row)
+        {
+            DMatrowPtr[row] = index;
+            prev_row = row;
+        }
+
         index++;
     }
     cout << endl;
 
-//    for(int i = 0; i < size_have ; i++ )
-//    {
-//        DMatrowPtr[i] = 0;
-//    }
-//    for(int i = 0 ; i < NnzDMat ; i++ )
-//    {
-//        int row = (DMatcolPtr[i] - DMatcolPtr[i]%size_wanted)/size_have;
-
-//        if ( row != 0 && DMatrowPtr[row] == 0 )
-//        {
-//            DMatrowPtr[row] = i;
-//        }
-//    }
-//    DMatrowPtr[size_have] = NnzDMat;
-
-//    for(int i = 0 ; i< NnzDMat ; i++ )
-//    {
-//        DMatcolPtr[i] = DMatcolPtr[i]%size_wanted;
-//    }
-
-
-
+    cout << "DMatcolPtr" << endl;
+    cout << "index = " << index << endl;
+    cout << "NnzDMat = " << NnzDMat << endl;
+    for(int i = 0 ; i < NnzDMat ; i++ )
+    {
+        cout << DMatcolPtr[i] << " ";
+    }
+    cout << endl;
 
 
     cout <<"A Matrix" << endl;
     cout << A << endl;
 
-//    for(int i = 0 ; i < size_have ; i++ )
-//    {
-//        for (int j = 0 ; j < size_wanted ; j++ )
-//        {
-//            DMatcolPtr[index] = A(i,j);
-//        }
-//    }
 
+    cout << "DMatrowPtr = " << endl;
     for(int i = 0; i < size_have+1 ; i++)
     {
         cout << DMatrowPtr[i] << " ";
     }
     cout << endl;
-
-    for(int i = 0 ; i < NnzDMat; i++)
-    {
-        cout << DMatcolPtr[i] << " ";
-    }
 
     cusparseHandle_t handle = 0;
     cusparseStatus_t status;
@@ -321,7 +313,7 @@ int main( int argc, char* argv[] )
 
     cusparseStatus_t status_t;
 
-    status_t = cusparseScsr2dense(handle,size_have,size_wanted,descr,d_csrValA,d_csrRowPtrA,d_DMatcolPtr,d_A_copy,size_have);
+    status_t = cusparseScsr2dense(handle,size_have,size_wanted,descr,d_DMatvalPtr,d_DMatrowPtr,d_DMatcolPtr,d_A_copy,size_have);
 
     if ( status_t == CUSPARSE_STATUS_SUCCESS)
     {
