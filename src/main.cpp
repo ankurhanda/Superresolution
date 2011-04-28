@@ -62,9 +62,9 @@ int main( int argc, char* argv[] )
     float lambda = 10;
 
 
-    cudaGLSetGLDevice(cutGetMaxGflopsDeviceId());
+    /*cudaGLSetGLDevice(cutGetMaxGflopsDeviceId());
     CreateGlutWindowAndBind("Main",width_window*2,height_window*2);
-    glewInit();
+    glewInit();*/
 
     CVD::Image<float> input_image;
 
@@ -88,7 +88,66 @@ int main( int argc, char* argv[] )
 
     TooN::Matrix<>A(size_have,size_wanted);
     A = TooN::Zeros(size_have,size_wanted);
-    buildDMatrixLebesgueMeasure(NnzDMat, size_have, N_rows_upimg, N_cols_upimg, DMatvalPtr, DMatrowPtr, DMatcolPtr, scale, A);
+
+    std::map<int,float>matindex_matval;
+
+    //DMatvalPtr, DMatrowPtr, DMatcolPtr,
+    buildDMatrixLebesgueMeasure(NnzDMat, size_have,size_wanted, N_rows_upimg, N_cols_upimg, scale, A, matindex_matval);
+
+//    for(int i = 0; i< NnzDMat ; i++)
+//    {
+
+//    }
+
+//    sort(matindex_matval.begin(),matindex_matval.end());
+
+
+    std::map<int,float>::iterator it;
+    cout << "Map begins " << endl;
+    int index = 0;
+    for(it = matindex_matval.begin(); it != matindex_matval.end(); it++ )
+    {
+        cout << (it->first)%size_wanted << " " ;//<< it->second << endl;
+//        DMatvalPtr[index] = (it->second);
+//        DMatcolPtr[index] = (it->first);//%size_wanted;
+        index++;
+    }
+    cout << endl;
+
+//    for(int i = 0; i < size_have ; i++ )
+//    {
+//        DMatrowPtr[i] = 0;
+//    }
+//    for(int i = 0 ; i < NnzDMat ; i++ )
+//    {
+//        int row = (DMatcolPtr[i] - DMatcolPtr[i]%size_wanted)/size_have;
+
+//        if ( row != 0 && DMatrowPtr[row] == 0 )
+//        {
+//            DMatrowPtr[row] = i;
+//        }
+//    }
+//    DMatrowPtr[size_have] = NnzDMat;
+
+//    for(int i = 0 ; i< NnzDMat ; i++ )
+//    {
+//        DMatcolPtr[i] = DMatcolPtr[i]%size_wanted;
+//    }
+
+
+
+
+
+    cout <<"A Matrix" << endl;
+    cout << A << endl;
+
+//    for(int i = 0 ; i < size_have ; i++ )
+//    {
+//        for (int j = 0 ; j < size_wanted ; j++ )
+//        {
+//            DMatcolPtr[index] = A(i,j);
+//        }
+//    }
 
     for(int i = 0; i < size_have+1 ; i++)
     {
@@ -135,17 +194,14 @@ int main( int argc, char* argv[] )
     cutilSafeCall(cudaMalloc((void**)&d_DMatcolPtr, NnzDMat*sizeof (int)));
 
     cutilSafeCall(cudaMalloc((void**)&d_DMatrowPtr, (size_have+1)*sizeof(int)));
-
     cutilSafeCall(cudaMalloc((void**)&d_A, (size_have)*sizeof(float)*size_wanted));
+
     cutilSafeCall(cudaMalloc((void**)&d_A_copy, (size_have)*sizeof(float)*size_wanted));
-
-
     cutilSafeCall(cudaMallocPitch(&(d_img ), &(imagePitchFloat), N_cols_upimg* sizeof (float), N_rows_upimg));
-
-
 
     cudaMemcpy(d_DMatvalPtr, DMatvalPtr, NnzDMat*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_DMatcolPtr, DMatcolPtr, NnzDMat*sizeof(int), cudaMemcpyHostToDevice);
+
     cudaMemcpy(d_DMatrowPtr, DMatrowPtr, (size_have+1)*sizeof(int), cudaMemcpyHostToDevice);
 
 
@@ -180,17 +236,64 @@ int main( int argc, char* argv[] )
     for (int i  = 0 ; i < size_have;i++)
         h_nnzPerRow[i] = 4;
 
-    int index = 0;
+    cout << endl;
+    index = 0;
     for(int i = 0 ; i < size_have ; i++)
     {
         for(int j = 0 ; j < size_wanted; j++)
         {
-//            static int index = 0;
-            index = j*size_have+i;
+            index = i*size_wanted+j;
             h_A[index] = A(i,j);
+//            cout << A(i,j) << " ";
             index++;
         }
     }
+
+
+    float* h_A_permuted = new float[size_have*size_wanted];
+    int H = size_have, x = 0;
+
+    for(int i = 0 ; i < size_have*size_wanted ; i++ )
+    {
+        h_A_permuted[i] = h_A[x];
+        x = x + H;
+        if ( x >= size_wanted*size_have)
+        {
+            static int count = 1;
+            x = count;
+            count++;
+        }
+    }
+
+    cout<<  endl << "h_A is" << endl;
+    for(int i = 0 ; i < size_have*size_wanted;i++)
+    {
+        cout << h_A[i] << " ";
+    }
+    cout << endl;
+
+    cout << "h_A_permuted is" << endl;
+    for(int i = 0 ; i < size_have*size_wanted;i++)
+    {
+        cout << h_A_permuted[i] << " ";
+    }
+    cout << endl;
+
+
+    TooN::Matrix<>newA(size_have,size_wanted);
+    for(int i = 0 ; i < size_have ; i++ )
+    {
+        for(int j = 0 ; j < size_wanted ; j++ )
+        {
+            int idx = i*size_wanted + j;
+            newA(i,j) = h_A_permuted[idx];
+        }
+    }
+
+    cout<<"A permuted"<<endl;
+    cout << newA<<endl;
+
+
 
     cudaMemcpy(d_A,h_A,sizeof(float)*size_have*size_wanted,cudaMemcpyHostToDevice );
     cudaMemcpy(d_nnzPerRow,h_nnzPerRow,sizeof(int)*size_have,cudaMemcpyHostToDevice );
@@ -216,10 +319,9 @@ int main( int argc, char* argv[] )
    }
    cout << endl;
 
-
     cusparseStatus_t status_t;
 
-    status_t = cusparseScsr2dense(handle,size_have,size_wanted,descr,d_csrValA,d_csrRowPtrA,d_csrColIndA,d_A_copy,size_have);
+    status_t = cusparseScsr2dense(handle,size_have,size_wanted,descr,d_csrValA,d_csrRowPtrA,d_DMatcolPtr,d_A_copy,size_have);
 
     if ( status_t == CUSPARSE_STATUS_SUCCESS)
     {
@@ -241,6 +343,18 @@ int main( int argc, char* argv[] )
     cout << "Copied Data!" << endl;
 
 
+//    for (int i = 0 ; i < size_have ; i++)
+//    {
+//        for(int j = 0 ; j < size_wanted ; j++)
+//        {
+
+//            A(i,j) = hh_A[j+i*size_wanted];
+
+//        }
+//    }
+//    A = TooN::Matrix<>(hh_A,size_have,size_wanted);
+//    cout << endl;
+//    cout<< A << endl;
 
 
 
@@ -291,7 +405,7 @@ int main( int argc, char* argv[] )
     }
     */
 
-    int width = input_image.size().x;
+    /*int width = input_image.size().x;
     int height = input_image.size().y;
 
     float aspect = width*1.0f/height*1.0f;
@@ -311,13 +425,9 @@ int main( int argc, char* argv[] )
                     .SetBounds(1.0, 0.0, 0, 150);
 
 
-
+    
     View& d_imgs = pangolin::Display("images")
-                   //.SetBounds(1.0, 0.8, 150, 1.0, false)
-                   //first distance from bottom left of opengl window i.e. 0.7 is 70%
-                   //co-ordinate from bottom left of screen from
-                   //0.0 to 1.0 for top, bottom, left, right.
-                   .SetBounds(1.0, 0.5, 150/*cus this is width in pixels of our panel*/, 1.0, false)
+                 .SetBounds(1.0, 0.5, 150, 1.0, false)
                    .SetLayout(LayoutEqual)
                    .AddDisplay(view_image0)
                    .AddDisplay(view_image1)
@@ -385,6 +495,7 @@ int main( int argc, char* argv[] )
         glutSwapBuffers();
         glutMainLoopEvent();
     }
+   */
 
     return 0;
 }

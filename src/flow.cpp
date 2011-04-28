@@ -310,58 +310,89 @@ void buildWMatrixBilinearInterpolation(int N_imgs, int N_rows_upimg, int N_cols_
 }
 
 
-void buildDMatrixLebesgueMeasure(int N_imgs, int N_rows_low_img, int N_cols_upimg, float** DMatvalPtr, int** DMatrowPtr, int** DMatcolPtr)
+void buildDMatrixLebesgueMeasure(int Nnz, int size_have, int size_wanted,int N_rows_upimg, int N_cols_upimg, /*float *DMatvalPtr, int *DMatrowPtr, int *DMatcolPtr,*/
+                                 float scale_factor, TooN::Matrix<>&A, std::map<int, float>& matindex_matval )
 {
 
-    for (int img_no = 1 ; img_no <= N_imgs ; img_no++)
-    {
 
-        int row_index = 1;
+        int row_index = 0;
+	int index = 0;
         float prev_row = 0;
+ 	float prev_col = 0;
 
-        for(float row_increment = 0; row_increment <= N_rows_upimg-1 ; row_increment+=scale_factor)
+        //DMatrowPtr[0] = 0;
+ 	float left_over_row = 0;
+	float left_over_col = 0;
+
+        float col_increment = scale_factor;
+        float row_increment = scale_factor;
+        cout << "scale_factor = " << scale_factor << endl;
+
+        while(1)
         {
 
-             int prev_row_int = (int)(ceil(prev_row));
-             int curr_row_int = (int)(ceil(row_increment));
-             float row_vec[curr_row_int-prev_row_int+1];
+             if ( prev_row >= N_rows_upimg)
+                 break;
+
+             int prev_row_int = (int)(floor(prev_row*1.0f));
+             int curr_row_int = (int)(ceil(prev_row+row_increment-1));
+
+             int row_vec_size = curr_row_int-prev_row_int+1;
+             float* row_vec = new float [row_vec_size];
              row_vec[0] = 1 - left_over_row;
-             for (int i = 1; i < curr_row_int-prev_row_int ; i++ )
+
+
+             for (int i = 1; i < row_vec_size-1 ; i++ )
              {
                  row_vec[i] = 1;
-                 sum_row_vec += 1;
              }
-             row_vec[curr_row_int-prev_row_int] = scale_factor-sum_row_vec;
 
+             row_vec[row_vec_size-1] = scale_factor-(row_vec_size-2)-row_vec[0];
 
-            for(float col_increment = 0; col_increment <= N_cols_upimg-1 ; col_increment+=scale_factor)
+             left_over_row = scale_factor - (row_vec_size-2)-row_vec[0];
+
+             if ( left_over_row >= 1.0f )
+                 left_over_row = 0.0;
+
+             TooN::Vector<>row_vector(row_vec_size);
+             for(int i = 0; i < row_vec_size; i++)
+                     row_vector[i]= row_vec[i];
+
+            prev_col = 0;
+            while(1)
             {
 
 
+                if (prev_col >= N_cols_upimg)
+                    break;
 
-                int prev_col_int = (int)(ceil(prev_col));
-                int curr_col_int = (int)(ceil(col_increment));
+                int prev_col_int = (int)(floor(prev_col));
+                int curr_col_int = (int)(ceil(prev_col+col_increment-1));
 
-                float col_vec[curr_col_int-prev_col_int+1];
 
+
+                int col_vec_size = curr_col_int-prev_col_int+1;
+
+                float* col_vec = new float [col_vec_size];
                 col_vec[0] = 1 - left_over_col;
-
-                sum_row_vec = row_vec[0];
 
                 for (int i = 1; i < curr_col_int-prev_col_int ; i++ )
                 {
                     col_vec[i] = 1;
-                    sum_col_vec += 1;
                 }
-                col_vec[curr_col_int-prev_col_int] = scale_factor-sum_col_vec;
+                col_vec[curr_col_int-prev_col_int] = scale_factor-(col_vec_size-2)-col_vec[0];
+                left_over_col = scale_factor - (col_vec_size-2)-col_vec[0];
 
+                if ( left_over_col >= 1.0f )
+                    left_over_col = 0.0f;
 
-                TooN::Vector<float> row_vector(row_vec);
-                TooN::Vector<float> col_vector(col_vec);
+                TooN::Vector<>col_vector(col_vec_size);
+                for(int i = 0; i < col_vec_size; i++)
+                        col_vector[i]= col_vec[i];
 
                 TooN::Matrix<>weightMat = row_vector.as_col()*col_vector.as_row();
 
-                int sum = 0 ;
+                int sumMat = 0 ;
                 for (int row_mat = 0 ; row_mat < weightMat.num_rows() ; row_mat++)
                 {
                     for (int col_mat = 0 ; col_mat < weightMat.num_cols() ; col_mat++)
@@ -370,26 +401,56 @@ void buildDMatrixLebesgueMeasure(int N_imgs, int N_rows_low_img, int N_cols_upim
                     }
                 }
 
-                weightMat = weightMat/ sum;
+                weightMat = weightMat/sumMat;
+
+//                {
+//                    DMatrowPtr[row_index] = index;
+//                }
+
+                for (int row_mat = 0 ; row_mat < weightMat.num_rows(); row_mat++)
+                {
+                    for (int col_mat = 0 ; col_mat < weightMat.num_cols(); col_mat++)
+                    {
+                        int col_number = (prev_row_int+row_mat)*N_cols_upimg + (prev_col_int+col_mat);
+                        if ( index < Nnz)
+                        {
+//                            DMatvalPtr[index] = weightMat(row_mat,col_mat)*1.0f;
+
+                            float val = 1.0f;
+
+                            A(row_index,col_number)=(val);
+
+//                            cout << "("<<row_index<<","<<col_number<<") = " << val << endl;
 
 
+                            int idx = (row_index)*size_wanted + (col_number);
+
+                            int row_t = idx - (idx/size_have)*size_have;
+                            int col_t = (idx - row_t)/size_have;
+
+//                            cout << "("<<row_index<<","<<col_number<<") transferred to (" << row_t<<", "<<col_t<<")" << endl;
+
+                            int key = row_t*size_wanted + col_t;
+
+                            matindex_matval[key] = (val);
 
 
+//                            DMatcolPtr[index] = col_number*1.0f;
+                            index++;
+                        }
+                    }
+                }
 
+                prev_col= prev_col+col_increment;
 
-
-
-
-
-
-
-
+                row_index++;
 
 
             }
+            prev_row = prev_row + row_increment;
+
         }
 
-    }
-
-}
+//        DMatrowPtr[size_have] = Nnz;
+  }
 
