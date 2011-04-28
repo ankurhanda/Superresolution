@@ -230,7 +230,7 @@ int read_horizontal_vertical_flow(float *u, float *v, int img_no, int N_rows_upi
 }
 
 
-void buildWMatrixBilinearInterpolation(int N_imgs, int N_rows_upimg, int N_cols_upimg, float** valPtr, int** rowPtr, int** colPtr)
+void buildWMatrixBilinearInterpolation(int N_imgs, int size_wanted, int N_rows_upimg, int N_cols_upimg, std::vector< std::map<int, float> >& h_vectorofMaps)
 {
 
     float *u, *v;
@@ -261,17 +261,17 @@ void buildWMatrixBilinearInterpolation(int N_imgs, int N_rows_upimg, int N_cols_
 
 
         int index = 0;
-        rowPtr[img_no-1][0]=0;
+//        rowPtr[img_no-1][0]=0;
 
-        int row_index = 1;
+        int row_index = 0;
+        int idx = 0;
+        int row_tT = 0;
+        int col_tT = 0;
 
         for (int row = 0 ; row < N_rows_upimg ; row++)
         {
             for (int col = 0 ; col < N_cols_upimg ; col++)
             {
-                // remember width  = N_cols_upimg
-                // remember height = N_cols_upimg
-
 
                 float horizontal_flow = u[col + row*N_cols_upimg];
                 float   vertical_flow = v[col + row*N_cols_upimg];
@@ -279,25 +279,63 @@ void buildWMatrixBilinearInterpolation(int N_imgs, int N_rows_upimg, int N_cols_
                 float x_ = min((N_cols_upimg-1)*1.0f, max(0.0f,col + horizontal_flow));
                 float y_ = min((N_rows_upimg-1)*1.0f, max(0.0f,row +   vertical_flow));
 
-                float x_ratio = x_ - floor(x_);
-                float y_ratio = y_ - floor(y_);
+                int flr_x = (int)floor(x_);
+                int flr_y = (int)floor(y_);
 
-                valPtr[img_no-1][index+0]  = (1-x_ratio)*(1-y_ratio);
-                colPtr[img_no-1][index+0]  = ((int)x_ + (int)y_*N_cols_upimg);
+                float x_ratio = x_ - flr_x;
+                float y_ratio = y_ - flr_y;
 
-                valPtr[img_no-1][index+1]  = (x_ratio)*(1-y_ratio);
-                colPtr[img_no-1][index+1]  = ((int)x_+1 + (int)y_*N_cols_upimg);
+                idx = ((int)flr_y)*N_cols_upimg+ ((int)flr_x) ;
+                index = idx*size_wanted + row_index;
+                row_tT  = index - (index/size_wanted)*size_wanted;
+                col_tT  = (index - row_tT)/size_wanted;
+                index = row_tT*size_wanted + col_tT;
+                h_vectorofMaps[img_no-1][index] = (1-x_ratio)*(1-y_ratio);
 
-                valPtr[img_no-1][index+2]  = (1-x_ratio)*y_ratio;
-                colPtr[img_no-1][index+2]  = ((int)x_ + ((int)y_+1)*N_cols_upimg);
+                idx = ((int)flr_y)*N_cols_upimg + ((int)flr_x+1);
+                index = idx*size_wanted + row_index;
+                row_tT  = index - (index/size_wanted)*size_wanted;
+                col_tT  = (index - row_tT)/size_wanted;
+                index = row_tT*size_wanted + col_tT;
+                h_vectorofMaps[img_no-1][index] = x_ratio*(1-y_ratio);
 
-                valPtr[img_no-1][index+3]  = (x_ratio)*y_ratio;
-                colPtr[img_no-1][index+3]  = ((int)x_+1 + ((int)y_+1)*N_cols_upimg);
+                idx = ((int)flr_y+1)*N_cols_upimg + ((int)flr_x);
+                index = idx*size_wanted + row_index;
+                row_tT  = index - (index/size_wanted)*size_wanted;
+                col_tT  = (index - row_tT)/size_wanted;
+                index = row_tT*size_wanted + col_tT;
+                h_vectorofMaps[img_no-1][index] = (1-x_ratio)*(y_ratio);
+
+                idx = ((int)flr_y+1)*N_cols_upimg + ((int)flr_x+1);
+                index = idx*size_wanted + row_index;
+                row_tT  = index - (index/size_wanted)*size_wanted;
+                col_tT  = (index - row_tT)/size_wanted;
+                index = row_tT*size_wanted + col_tT;
+                h_vectorofMaps[img_no-1][index] = (x_ratio)*(y_ratio);
 
 
-                rowPtr[img_no-1][row_index] = index;
-                row_index++;
-                index = index+4;
+
+//                index = idx + row_index*size_wanted;
+
+
+//                valPtr[img_no-1][index+0]  = (1-x_ratio)*(1-y_ratio);
+//                colPtr[img_no-1][index+0]  = ((int)x_ + (int)y_*N_cols_upimg);
+
+//                valPtr[img_no-1][index+1]  = (x_ratio)*(1-y_ratio);
+//                colPtr[img_no-1][index+1]  = ((int)x_+1 + (int)y_*N_cols_upimg);
+
+//                valPtr[img_no-1][index+2]  = (1-x_ratio)*y_ratio;
+//                colPtr[img_no-1][index+2]  = ((int)x_ + ((int)y_+1)*N_cols_upimg);
+
+//                valPtr[img_no-1][index+3]  = (x_ratio)*y_ratio;
+//                colPtr[img_no-1][index+3]  = ((int)x_+1 + ((int)y_+1)*N_cols_upimg);
+
+
+//                rowPtr[img_no-1][row_index] = index;
+//                row_index++;
+//                index = index+4;
+
+                 row_index++;
             }
 
         }
