@@ -92,7 +92,7 @@ int main( int argc, char* argv[] )
     float *WMatvalPtrT = new float[NnzWMatT];
     int *WMatcolPtrT = new   int[NnzWMatT];
     int *WMatrowPtrT = new   int[size_wantedW+1];
-    int *WMatrowPtrT_copy = new   int[size_wantedW+1];
+//    int *WMatrowPtrT_copy = new   int[size_wantedW+1];
     int *h_nnzPerRow    = new   int[size_wantedW];
 
 
@@ -102,7 +102,7 @@ int main( int argc, char* argv[] )
     for(int i = 1 ; i < size_wantedW; i++)
     {
         WMatrowPtrT[i] =-1;
-        h_nnzPerRow[i] =0;
+        h_nnzPerRow[i] = 0;
     }
     WMatrowPtrT[size_wantedW] = NnzWMatT;
 
@@ -162,7 +162,6 @@ int main( int argc, char* argv[] )
     float *d_WMatvalPtrT_copy;
     int *d_WMatcolPtrT_copy;
     int *d_WMatrowPtrT_copy;
-//    float *d_W;
     int *d_nnzPerRow_copy;
 
 
@@ -210,7 +209,7 @@ int main( int argc, char* argv[] )
     status_t = cusparseScsr2dense(handle,size_wantedW,size_wantedW,descr,d_WMatvalPtrT,d_WMatrowPtrT,d_WMatcolPtrT,d_W,size_wantedW);
 
     float *h_W = new float[size_wantedW*size_wantedW];
-//    cudaMemcpy(h_W,d_W,sizeof(float)*size_wantedW*size_wantedW,cudaMemcpyDeviceToHost);
+    cudaMemcpy(h_W,d_W,sizeof(float)*size_wantedW*size_wantedW,cudaMemcpyDeviceToHost);
 
 
 
@@ -233,8 +232,8 @@ int main( int argc, char* argv[] )
     cusparseSdense2csr(handle,size_wantedW,size_wantedW,descr,d_W,size_wantedW,d_nnzPerRow,d_WMatvalPtrT_copy, d_WMatrowPtrT_copy,d_WMatcolPtrT_copy);
 
 
-//    cudaMemcpy(WMatrowPtrT,d_WMatrowPtrT_copy,sizeof(int)*(size_wantedW+1),cudaMemcpyDeviceToHost);
-    cudaMemcpy(WMatrowPtrT_copy,d_WMatrowPtrT_copy,sizeof(int)*(size_wantedW+1),cudaMemcpyDeviceToHost);
+    cudaMemcpy(WMatrowPtrT,d_WMatrowPtrT_copy,sizeof(int)*(size_wantedW+1),cudaMemcpyDeviceToHost);
+//    cudaMemcpy(WMatrowPtrT_copy,d_WMatrowPtrT_copy,sizeof(int)*(size_wantedW+1),cudaMemcpyDeviceToHost);
     cudaMemcpy(WMatcolPtrT,d_WMatcolPtrT_copy,sizeof(int)*NnzWMatT,cudaMemcpyDeviceToHost);
     cudaMemcpy(WMatvalPtrT,d_WMatvalPtrT_copy,sizeof(float)*NnzWMatT,cudaMemcpyDeviceToHost);
 
@@ -258,19 +257,19 @@ int main( int argc, char* argv[] )
         cout<< WMatvalPtrT[i]<< " ";
     }
     cout<<endl;
-//    cout<<"WMatrowPtr = "<<endl;
-//    for(int i = 0 ; i < size_wantedW+1;i++)
-//    {
-//        cout<< WMatrowPtrT[i]<< " ";
-//    }
-//    cout<<endl;
-
-    cout<<"WMatrowPtr_copy = "<<endl;
+    cout<<"WMatrowPtr = "<<endl;
     for(int i = 0 ; i < size_wantedW+1;i++)
     {
-        cout<< WMatrowPtrT_copy[i]<< " ";
+        cout<< WMatrowPtrT[i]<< " ";
     }
     cout<<endl;
+
+//    cout<<"WMatrowPtr_copy = "<<endl;
+//    for(int i = 0 ; i < size_wantedW+1;i++)
+//    {
+//        cout<< WMatrowPtrT_copy[i]<< " ";
+//    }
+//    cout<<endl;
 
 
 
