@@ -118,7 +118,7 @@ int main( int argc, char* argv[] )
 
         h_nnzPerRow[row]++;
 
-        cout<< "row = "<<row<<endl;
+//        cout<< "row = "<<row<<endl;
 
         if ( WMatrowPtrT[row] == -1 && prev_row != row)
         {
@@ -129,6 +129,31 @@ int main( int argc, char* argv[] )
 
     }
 
+    cout<< "WMat Row Ptr before" <<endl;
+    for(int i = 0 ; i < size_wantedW+1; i++)
+    {
+        cout << WMatrowPtrT[i] << " ";
+    }
+    cout << endl;
+
+//    for(int i = 1 ; i < size_wantedW; i++)
+    index = 1;
+    while(1)
+    {
+        if( index > size_wantedW)
+            break;
+
+        int startindex = index;
+        while( WMatrowPtrT[index] == -1)
+        {
+            index++;
+        }
+        for(int i = startindex; i <= index-1 ; i++)
+        {
+            WMatrowPtrT[i] = WMatrowPtrT[index];
+        }
+        index++;
+    }
 
     cout<<endl;
     cout<< "WMat Col Ptr before" <<endl;
@@ -145,7 +170,7 @@ int main( int argc, char* argv[] )
     }
     cout << endl;
 
-    cout<< "WMat Row Ptr before" <<endl;
+    cout<< "WMat Row Ptr after" <<endl;
     for(int i = 0 ; i < size_wantedW+1; i++)
     {
         cout << WMatrowPtrT[i] << " ";
@@ -209,7 +234,7 @@ int main( int argc, char* argv[] )
     status_t = cusparseScsr2dense(handle,size_wantedW,size_wantedW,descr,d_WMatvalPtrT,d_WMatrowPtrT,d_WMatcolPtrT,d_W,size_wantedW);
 
     float *h_W = new float[size_wantedW*size_wantedW];
-    cudaMemcpy(h_W,d_W,sizeof(float)*size_wantedW*size_wantedW,cudaMemcpyDeviceToHost);
+//    cudaMemcpy(h_W,d_W,sizeof(float)*size_wantedW*size_wantedW,cudaMemcpyDeviceToHost);
 
 
 
