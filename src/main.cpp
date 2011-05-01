@@ -736,6 +736,9 @@ int main( int argc, char* argv[] )
 
 ////    size_t imagePitchFloat;
 
+    float *d_horizontal_velocity_all;
+    float *d_vertical_velocity_all;
+
     float *d_DMatvalPtr;
     int *d_DMatcolPtr;
     int *d_DMatrowPtr;
@@ -758,9 +761,21 @@ int main( int argc, char* argv[] )
     float *h_A_copy = new float[size_have*size_wanted];
     float *h_AxT;
 
-//    int output_vector_size = size_have;
-////    cout<<"Init the various csr format pointers!"<<endl;
-////    getchar();
+    float *d_px;
+    float *d_py;
+    float *d_ux_;
+    float *d_uy_;
+
+    float *d_ydcopyqi;
+    float *d_DTqi_copy;
+    float *d_BTDTqi;
+
+
+
+
+    size_t horizontal_velocity_pitch;
+    size_t vertical_velocity_pitch;
+
 
     cutilSafeCall(cudaMalloc((void**)&d_DMatvalPtr, NnzDMat*sizeof (float)));
     cutilSafeCall(cudaMalloc((void**)&d_DMatcolPtr, NnzDMat*sizeof (int)));
@@ -778,6 +793,15 @@ int main( int argc, char* argv[] )
 
     cutilSafeCall(cudaMalloc((void**)&d_A_copy, (size_have)*sizeof(float)*size_wanted));
     cutilSafeCall(cudaMalloc((void**)&d_img, sizeof(float)*size_wanted));
+    cutilSafeCall(cudaMalloc((void**)&d_ydcopyqi, (size_have)*sizeof(float)));
+    cutilSafeCall(cudaMalloc((void**)&d_DTqi_copy, (size_wanted)*sizeof(float)));
+
+
+
+    cutilSafeCall(cudaMallocPitch(&d_horizontal_velocity_all,&horizontal_velocity_pitch,sizeof(float)*size_wanted,N_imgs));
+    cutilSafeCall(cudaMallocPitch(&d_vertical_velocity_all,&vertical_velocity_pitch,sizeof(float)*size_wanted,N_imgs));
+
+
 //    cutilSafeCall(cudaMalloc((void**)&d_imgT, sizeof(float)*size_have));
 
 
@@ -887,48 +911,58 @@ int main( int argc, char* argv[] )
 
 
 
-    //cudaMemset2D(zero, zerop, 0.f, sizeof(float)*(M+2), (N+2));
+//    cudaMemset2D(zero, zerop, 0.f, sizeof(float)*(M+2), (N+2));
 
-//    {
-//        launch_kernel_dual_variable_p;
+    //Copy horizontal_velocities and vertical velocities
 
-//        for(int i = 0 ; i < N_imgs; i++)
-//        {
-//            //copy_qi_into_yd
-//            cudaMemcpy(yd,qi+(size_have)*i,sizeof(float)*size_have,cudaMemcpyDeviceToDevice);
+    {
+        launch_kernel_derivative_u(d_ux_,d_uy_,d_u_,imageStrideFloat,width, height);
 
-//            //do W_iu
-//            launch_kernel_Mult_Wi_u(yd, horizontal_velocity, vertical_velocity);
+        launch_kernel_dual_variable_p(d_px,d_py,d_ux_,d_uy_,sigma,stride,width,height);
 
-//            //do B*(W_iu)
-//            launch_kernel_blur_Wiu(yd, blur_kernel);
+        for(int i = 0 ; i < N_imgs; i++)
+        {
+            //copy_qi_into_yd
+//            cudaMemcpy(d_ydcopyqi,qi+(size_have)*i,sizeof(float)*size_have,cudaMemcpyDeviceToDevice);
 
-//            //do D*(B*(W_iu))
-//            cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_have, size_wanted, 1.0, descr, d_DMatvalPtr, d_DMatrowPtr, d_DMatcolPtr, d_res, 0.0, d_res);
+            //do W_iu
+            launch_kernel_Mult_Wi_u(d_ydcopyqi, d_u_, d_horizontal_velocity_all+size_wanted*i, d_vertical_velocity_all+size_wanted*i, i);
 
-//            //Subtract f_i and Add to y;
-//            launch_kernel_subtract_DBWiu_f_add_y(d_res,);
+            //do B*(W_iu)
+            launch_kernel_blur_Wiu(d_blur_result,d_ydcopyqi, blur_kernel);
 
-//            // copy y to qi;
-//            cudaMemcpy(qi+(size_have)*i,yd,sizeof(float)*size_have,cudaMemcpyDeviceToDevice);
-//        }
+            //do D*(B*(W_iu))
+            cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_have, size_wanted, 1.0, descr, d_DMatvalPtr, d_DMatrowPtr, d_DMatcolPtr, d_blur_result, 0.0, d_res);
 
-//        for(int i = 0 ; i < N_imgs ; i++)
-//        {
-//            //copy_qi_to_yu;
-//            cudaMemcpy(qi+(size_have)*i,yu,sizeof(float)*size_have,cudaMemcpyDeviceToDevice);
-//            //do D^{T}*yu;
-//            cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_have, size_wanted, 1.0, descr, d_DMatvalPtrT, d_DMatrowPtrT, d_DMatcolPtrT, yu, 0.0, d_res);
-//            //do B^{T}*(D^{T}*yu);
-//            launch_kernel_blurTranspose();
-//        }
+            //Subtract f_i and Add to y;
+            launch_kernel_q_SubtractDBWiu_fAdd_yAndReproject(d_res,qi+(size_have)*i,d_fi+size_have*i,i,sigma_q,xisqr);
 
-//        // do batch Wi^{T}yu;
-//        cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_have, size_wanted, 1.0, descr, d_DMatvalPtrT, d_DMatrowPtrT, d_DMatcolPtrT, yu, 0.0, d_res);
+            // copy y to qi;
+//            cudaMemcpy(qi+(size_have)*i,d_ydcopyqi,sizeof(float)*size_have,cudaMemcpyDeviceToDevice);
+        }
 
-//        //launch kernel u ;
-//        launch_kernel_update_u();
-//    }
+        for(int i = 0 ; i < N_imgs ; i++)
+        {
+            //copy_qi_to_yu;
+            cudaMemcpy(qi+(size_have)*i,d_ydcopyqi,sizeof(float)*size_have,cudaMemcpyDeviceToDevice);
+
+            //do D^{T}*yu;
+            cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_have, size_wanted, 1.0, descr, d_DMatvalPtrT, d_DMatrowPtrT, d_DMatcolPtrT, d_ydcopyqi, 0.0, d_DTqi_copy);
+
+            //do B^{T}*(D^{T}*yu);
+            launch_kernel_blurTranspose(d_DTqi_copy,blur_kernelT,d_BTDTqi);
+
+            //copy the contents back t
+            cudaMemcpy(d_dual_save_qT+(size_wanted)*i,d_BTDTqi,sizeof(float)*size_wanted,cudaMemcpyDeviceToDevice);
+
+        }
+
+        // do batch Wi^{T}yu;
+        cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_have, size_wanted, 1.0, descr, d_WMatvalPtrT, d_WMatrowPtrT, d_WMatcolPtrT, d_dual_save_qT, 0.0, d_dual_save_qT);
+
+        //launch kernel u ;
+        launch_kernel_update_u(d_px,d_py,d_u,d_u_,d_dual_save_qT,stride,width,height,tau,lambda);
+    }
 
 
 
