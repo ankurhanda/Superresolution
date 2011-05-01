@@ -91,7 +91,7 @@ int main( int argc, char* argv[] )
 
 //    for(int i = 0 ; i < d_vector.size(); i++)
 //    {
-////        thrust::tuple<int,float>t = d_vector[i];
+//       thrust::tuple<int,float>t = d_vector[i];
 //        std::cout<< thrust::get<0>(t)<<endl;
 //    }
 
@@ -105,8 +105,7 @@ int main( int argc, char* argv[] )
 //    int size_wantedW = N_cols_upimgT*N_rows_upimgT;
 
 
-//    int N_imgs = 1;
-//    std::vector< std::map <int, float> > h_vectorofMaps(N_imgs);
+
 
 
 //    TooN::Matrix<> WMat(size_wantedW,size_wantedW);
@@ -357,12 +356,209 @@ int main( int argc, char* argv[] )
 
 
     float *input_image_data_up = new float[size_wanted];
-//    for(int i = 0 ; i < size_wanted ;i++)
-//    {
-//        input_image_data_up[i] = i;
-//    }
-
     input_image_data_up = input_image_up.data();
+
+
+
+
+    //############################### Computing the W^{T}'s for all the flow vectors ###########################
+
+    int N_imgs = 9;
+    std::vector< std::map <int, float> > h_vectorofMaps(N_imgs);
+
+    buildWMatrixBilinearInterpolation(N_imgs, size_wanted, N_rows_upimg, N_cols_upimg, h_vectorofMaps);//,WMatT );
+
+
+
+    float **WMatvalPtrT;
+    WMatvalPtrT = (float**)malloc(sizeof(float*)*N_imgs);
+
+    int **WMatcolPtrT;
+    WMatcolPtrT = (int**)malloc(sizeof(int*)*N_imgs);
+
+    int **WMatrowPtrT;
+    WMatrowPtrT = (int**)malloc(sizeof(int*)*N_imgs);
+
+    int **h_nnzPerRow;
+    h_nnzPerRow = (int**)malloc(sizeof(int*)*N_imgs);
+
+    float *d_WMatvalPtrT;
+    int *d_WMatcolPtrT;
+    int *d_WMatrowPtrT;
+
+
+//    int *d_nnzPerRowT;
+
+//    cutilSafeCall(cudaMalloc((void**)d_WMatvalPtrT, N_imgs*sizeof(float*)));
+//    cutilSafeCall(cudaMalloc((void**)d_WMatcolPtrT, N_imgs*sizeof(int*)));
+//    cutilSafeCall(cudaMalloc((void**)d_WMatrowPtrT, N_imgs*sizeof(int*)));
+//    cutilSafeCall(cudaMalloc((void**)d_nnzPerRowT,  N_imgs*sizeof(int*)));
+
+
+    int total_nonzeros=0;
+
+    for(int i = 0 ; i < N_imgs ; i++)
+    {
+        std::map<int, float>::iterator it;
+        std::map<int, float> mapW = h_vectorofMaps[i];
+
+        int NnzWMatT = (int)mapW.size();
+
+        WMatvalPtrT[i] = new float[NnzWMatT];
+        WMatcolPtrT[i] = new int[NnzWMatT];
+        WMatrowPtrT[i] = new int[size_wanted+1];
+        h_nnzPerRow[i] = new int[size_wanted];
+
+        total_nonzeros += NnzWMatT;
+
+//        cudaExtent extentNnz  = make_cudaExtent(NnzWMatT*sizeof(float)*,N_imgs);
+//        cudaExtent extentRows = make_cudaExtent((size_wanted+1)*sizeof(float)*,N_imgs);
+
+
+
+//        cutilSafeCall(cudaMalloc((void**)&d_WMatvalPtrT[i], NnzWMatT*sizeof (float)));
+//        cutilSafeCall(cudaMalloc((void**)&d_WMatcolPtrT[i], NnzWMatT*sizeof (int)));
+//        cutilSafeCall(cudaMalloc((void**)&d_WMatrowPtrT[i], (size_wanted+1)*sizeof(int)));
+//        cutilSafeCall(cudaMalloc((void**)&d_nnzPerRowT[i],  size_wanted*sizeof(int)));
+
+
+        int index = 0, prev_row=-1;
+
+        cout<< "NnzWMatT = "<<NnzWMatT <<endl;
+
+        WMatrowPtrT[i][0] = 0;
+        h_nnzPerRow[i][0] = 0;
+
+        for(int j = 1 ; j < size_wanted; j++)
+        {
+            WMatrowPtrT[i][j] =-1;
+            h_nnzPerRow[i][j] = 0;
+        }
+        WMatrowPtrT[i][size_wanted] = NnzWMatT;
+
+//        cout<<"have initialised the matrices"<<endl;
+
+        index = 0;
+        for(it = mapW.begin(); it != mapW.end() ; it++)
+        {
+
+            WMatcolPtrT[i][index] = (it->first)%size_wanted;
+            WMatvalPtrT[i][index] = (it->second);
+
+            int row = ((it->first) - (it->first)%size_wanted)/size_wanted;
+            h_nnzPerRow[i][row]++;
+
+            if ( WMatrowPtrT[i][row] == -1 && prev_row != row)
+            {
+                WMatrowPtrT[i][row] = index;
+                prev_row = row;
+            }
+            index++;
+
+        }
+
+//        cout<<"i ="<<i<<" WMat Row Ptr before" <<endl;
+//        for(int j = 0 ; j < size_wanted+1; j++)
+//        {
+//            cout << WMatrowPtrT[i][j] << " ";
+//        }
+//        cout << endl;
+
+        index = 1;
+        while(1)
+        {
+            if( index > size_wanted)
+                break;
+
+            int startindex = index;
+            while( WMatrowPtrT[i][index] == -1)
+            {
+                index++;
+            }
+            for(int j = startindex; j <= index-1 ; j++)
+            {
+                WMatrowPtrT[i][j] = WMatrowPtrT[i][index];
+            }
+            index++;
+        }
+
+
+        WMatrowPtrT[i][0] = 0;
+//        cout<<endl;
+//        cout<<"i ="<<i<<" WMat Col Ptr before" <<endl;
+//        for(int j = 0 ; j < NnzWMatT; j++)
+//        {
+//            cout << WMatcolPtrT[i][j] << " ";
+//        }
+//        cout << endl;
+
+//        cout<< "i ="<<i<<" WMat Val Ptr before" <<endl;
+//        for(int j = 0 ; j < NnzWMatT; j++)
+//        {
+//            cout << WMatvalPtrT[i][j] << " ";
+//        }
+//        cout << endl;
+
+//        cout<<"i ="<<i<<" WMat Row Ptr after" <<endl;
+//        for(int j = 0 ; j < size_wanted+1; j++)
+//        {
+//            cout << WMatrowPtrT[i][j] << " ";
+//        }
+//        cout << endl;
+    }
+
+
+//    cudaExtent extentNnz = make_cudaExtent(total_nonzeros*sizeof(float),1);
+
+    size_t WMatcol_pitch;
+    cutilSafeCall(cudaMallocPitch(&d_WMatcolPtrT,&WMatcol_pitch,total_nonzeros*sizeof(int),1));
+
+    size_t WMatval_pitch;
+    cutilSafeCall(cudaMallocPitch(&d_WMatvalPtrT,&WMatval_pitch,total_nonzeros*sizeof(float),1));
+
+    size_t WMatrow_pitch;
+    cutilSafeCall(cudaMallocPitch(&d_WMatrowPtrT,&WMatrow_pitch,(size_wanted+1)*sizeof(int),N_imgs));
+
+
+//    can avoid this by using 2D malloc I think!
+//    cudaPitchedPtr d_dual_q;
+//    cudaExtent extent = make_cudaExtent(sizeof(float)*N_cols_low_img,N_rows_low_img,N_imgs);
+//    cudaMalloc3D(&d_dual_q,extent);
+
+
+    cout<<"everything looks okay!"<<endl;
+
+//   {
+
+
+
+
+
+//   for(int i = 0 ; i < N_imgs ; i++)
+//   {
+
+//   }
+
+
+//   cutilSafeCall(cudaMalloc((void**)&d_W, size_wantedW*sizeof (float)*size_wantedW));
+
+
+
+//   }
+
+
+
+//   exit(1);
+
+
+   //###########################################################################################################
+
+
+
+
+
+
+
 
 //    float *input_image_data_low = new float[size_have];
 //    input_image_data_low = input_image_low.data();
