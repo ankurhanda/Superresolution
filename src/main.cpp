@@ -343,8 +343,8 @@ int main( int argc, char* argv[] )
 
 
 
-    int N_cols_low_img = 8;//input_image_low.size().x;
-    int N_rows_low_img = 8;//input_image_low.size().y;
+    int N_cols_low_img = input_image_low.size().x;
+    int N_rows_low_img = input_image_low.size().y;
 
     int size_have  = N_rows_low_img*N_cols_low_img;
     float scale = 2;
@@ -355,20 +355,20 @@ int main( int argc, char* argv[] )
     int size_wanted  = N_rows_upimg*N_cols_upimg;
 
 
-    int input_vector_size = size_wanted*2;
-    float *input_image_data_up = new float[input_vector_size];
+//    int input_vector_size = size_wanted*2;
+//    float *input_image_data_up = new float[input_vector_size];
 
-    for(int i = 0 ; i < input_vector_size ; i++)
-    {
-        input_image_data_up[i] = i;
-    }
+//    for(int i = 0 ; i < input_vector_size ; i++)
+//    {
+//        input_image_data_up[i] = i;
+//    }
 
-    float *input_image_data_down = new float[size_have];
+//    float *input_image_data_down = new float[size_have];
 
-    for(int i = 0 ; i < size_have ; i++)
-    {
-        input_image_data_down[i] = i;
-    }
+//    for(int i = 0 ; i < size_have ; i++)
+//    {
+//        input_image_data_down[i] = i;
+//    }
 
     //input_image_data_up = input_image_up.data();
 
@@ -377,28 +377,29 @@ int main( int argc, char* argv[] )
 
     //############################### Computing the W^{T}'s for all the flow vectors ###########################
 
-//    int N_imgs = 9;
-//    std::vector< std::map <int, float> > h_vectorofMaps(N_imgs);
+    int N_imgs = 9;
+    std::vector< std::map <int, float> > h_vectorofMaps(N_imgs);
 
-//    buildWMatrixBilinearInterpolation(N_imgs, size_wanted, N_rows_upimg, N_cols_upimg, h_vectorofMaps);//,WMatT );
+    buildWMatrixBilinearInterpolation(N_imgs, size_wanted, N_rows_upimg, N_cols_upimg, h_vectorofMaps);//,WMatT );
 
 
 
-//    float **WMatvalPtrT;
-//    WMatvalPtrT = (float**)malloc(sizeof(float*)*N_imgs);
+    float **WMatvalPtrT;
+    WMatvalPtrT = (float**)malloc(sizeof(float*)*N_imgs);
 
-//    int **WMatcolPtrT;
-//    WMatcolPtrT = (int**)malloc(sizeof(int*)*N_imgs);
+    int **WMatcolPtrT;
+    WMatcolPtrT = (int**)malloc(sizeof(int*)*N_imgs);
 
-//    int **WMatrowPtrT;
-//    WMatrowPtrT = (int**)malloc(sizeof(int*)*N_imgs);
+    int **WMatrowPtrT;
+    WMatrowPtrT = (int**)malloc(sizeof(int*)*N_imgs);
 
-//    int **h_nnzPerRow;
-//    h_nnzPerRow = (int**)malloc(sizeof(int*)*N_imgs);
+    int **h_nnzPerRow;
+    h_nnzPerRow = (int**)malloc(sizeof(int*)*N_imgs);
 
-//    float *d_WMatvalPtrT;
-//    int *d_WMatcolPtrT;
-//    int *d_WMatrowPtrT;
+
+    float *d_WMatvalPtrT;
+    int *d_WMatcolPtrT;
+    int *d_WMatrowPtrT;
 
 
 //    int *d_nnzPerRowT;
@@ -409,128 +410,136 @@ int main( int argc, char* argv[] )
 //    cutilSafeCall(cudaMalloc((void**)d_nnzPerRowT,  N_imgs*sizeof(int*)));
 
 
-//    int total_nonzeros=0;
+    int total_nonzeros=0;
 
-//    for(int i = 0 ; i < N_imgs ; i++)
-//    {
-//        std::map<int, float>::iterator it;
-//        std::map<int, float> mapW = h_vectorofMaps[i];
+    for(int i = 0 ; i < N_imgs ; i++)
+    {
+        std::map<int, float>::iterator it;
+        std::map<int, float> mapW = h_vectorofMaps[i];
 
-//        int NnzWMatT = (int)mapW.size();
+        int NnzWMatT = (int)mapW.size();
 
-//        WMatvalPtrT[i] = new float[NnzWMatT];
-//        WMatcolPtrT[i] = new int[NnzWMatT];
-//        WMatrowPtrT[i] = new int[size_wanted+1];
-//        h_nnzPerRow[i] = new int[size_wanted];
+        WMatvalPtrT[i] = new float[NnzWMatT];
+        WMatcolPtrT[i] = new int[NnzWMatT];
+        WMatrowPtrT[i] = new int[size_wanted+1];
+        h_nnzPerRow[i] = new int[size_wanted];
 
-//        total_nonzeros += NnzWMatT;
+        total_nonzeros += NnzWMatT;
 
 
-//        int index = 0, prev_row=-1;
+        int index = 0, prev_row=-1;
 
-//        cout<< "NnzWMatT = "<<NnzWMatT <<endl;
+        cout<< "NnzWMatT = "<<NnzWMatT <<endl;
 
-//        WMatrowPtrT[i][0] = 0;
-//        h_nnzPerRow[i][0] = 0;
+        WMatrowPtrT[i][0] = 0;
+        h_nnzPerRow[i][0] = 0;
 
-//        for(int j = 1 ; j < size_wanted; j++)
+        for(int j = 1 ; j < size_wanted; j++)
+        {
+            WMatrowPtrT[i][j] =-1;
+            h_nnzPerRow[i][j] = 0;
+        }
+        WMatrowPtrT[i][size_wanted] = NnzWMatT;
+
+        cout<<"have initialised the matrices"<<endl;
+
+        index = 0;
+        for(it = mapW.begin(); it != mapW.end() ; it++)
+        {
+
+            WMatcolPtrT[i][index] = (it->first)%size_wanted;
+            WMatvalPtrT[i][index] = (it->second);
+
+            int row = ((it->first) - (it->first)%size_wanted)/size_wanted;
+            h_nnzPerRow[i][row]++;
+
+            if ( WMatrowPtrT[i][row] == -1 && prev_row != row)
+            {
+                WMatrowPtrT[i][row] = index;
+                prev_row = row;
+            }
+            index++;
+
+        }
+
+//        cout<<"i ="<<i<<" WMat Row Ptr before" <<endl;
+//        for(int j = 0 ; j < size_wanted+1; j++)
 //        {
-//            WMatrowPtrT[i][j] =-1;
-//            h_nnzPerRow[i][j] = 0;
+//            cout << WMatrowPtrT[i][j] << " ";
 //        }
-//        WMatrowPtrT[i][size_wanted] = NnzWMatT;
+//        cout << endl;
 
-////        cout<<"have initialised the matrices"<<endl;
+        index = 1;
+        while(1)
+        {
+            if( index > size_wanted)
+                break;
 
-//        index = 0;
-//        for(it = mapW.begin(); it != mapW.end() ; it++)
+            int startindex = index;
+            while( WMatrowPtrT[i][index] == -1)
+            {
+                index++;
+            }
+            for(int j = startindex; j <= index-1 ; j++)
+            {
+                WMatrowPtrT[i][j] = WMatrowPtrT[i][index];
+            }
+            index++;
+        }
+
+
+        WMatrowPtrT[i][0] = 0;
+//        cout<<endl;
+//        cout<<"i ="<<i<<" WMat Col Ptr before" <<endl;
+//        for(int j = 0 ; j < NnzWMatT; j++)
 //        {
-
-//            WMatcolPtrT[i][index] = (it->first)%size_wanted;
-//            WMatvalPtrT[i][index] = (it->second);
-
-//            int row = ((it->first) - (it->first)%size_wanted)/size_wanted;
-//            h_nnzPerRow[i][row]++;
-
-//            if ( WMatrowPtrT[i][row] == -1 && prev_row != row)
-//            {
-//                WMatrowPtrT[i][row] = index;
-//                prev_row = row;
-//            }
-//            index++;
-
+//            cout << WMatcolPtrT[i][j] << " ";
 //        }
+//        cout << endl;
 
-////        cout<<"i ="<<i<<" WMat Row Ptr before" <<endl;
-////        for(int j = 0 ; j < size_wanted+1; j++)
-////        {
-////            cout << WMatrowPtrT[i][j] << " ";
-////        }
-////        cout << endl;
-
-//        index = 1;
-//        while(1)
+//        cout<< "i ="<<i<<" WMat Val Ptr before" <<endl;
+//        for(int j = 0 ; j < NnzWMatT; j++)
 //        {
-//            if( index > size_wanted)
-//                break;
-
-//            int startindex = index;
-//            while( WMatrowPtrT[i][index] == -1)
-//            {
-//                index++;
-//            }
-//            for(int j = startindex; j <= index-1 ; j++)
-//            {
-//                WMatrowPtrT[i][j] = WMatrowPtrT[i][index];
-//            }
-//            index++;
+//            cout << WMatvalPtrT[i][j] << " ";
 //        }
+//        cout << endl;
 
-
-//        WMatrowPtrT[i][0] = 0;
-////        cout<<endl;
-////        cout<<"i ="<<i<<" WMat Col Ptr before" <<endl;
-////        for(int j = 0 ; j < NnzWMatT; j++)
-////        {
-////            cout << WMatcolPtrT[i][j] << " ";
-////        }
-////        cout << endl;
-
-////        cout<< "i ="<<i<<" WMat Val Ptr before" <<endl;
-////        for(int j = 0 ; j < NnzWMatT; j++)
-////        {
-////            cout << WMatvalPtrT[i][j] << " ";
-////        }
-////        cout << endl;
-
-////        cout<<"i ="<<i<<" WMat Row Ptr after" <<endl;
-////        for(int j = 0 ; j < size_wanted+1; j++)
-////        {
-////            cout << WMatrowPtrT[i][j] << " ";
-////        }
-////        cout << endl;
-//    }
+//        cout<<"i ="<<i<<" WMat Row Ptr after" <<endl;
+//        for(int j = 0 ; j < size_wanted+1; j++)
+//        {
+//            cout << WMatrowPtrT[i][j] << " ";
+//        }
+//        cout << endl;
+    }
 
 
 //    cudaExtent extentNnz = make_cudaExtent(total_nonzeros*sizeof(float),1);
 
-//    size_t WMatcol_pitch;
-//    cutilSafeCall(cudaMallocPitch(&d_WMatcolPtrT,&WMatcol_pitch,total_nonzeros*sizeof(int),1));
+    size_t WMatcol_pitchT;
+    cutilSafeCall(cudaMallocPitch(&d_WMatcolPtrT,&WMatcol_pitchT,total_nonzeros*sizeof(int),1));
 
-//    size_t WMatval_pitch;
-//    cutilSafeCall(cudaMallocPitch(&d_WMatvalPtrT,&WMatval_pitch,total_nonzeros*sizeof(float),1));
+    size_t WMatval_pitchT;
+    cutilSafeCall(cudaMallocPitch(&d_WMatvalPtrT,&WMatval_pitchT,total_nonzeros*sizeof(float),1));
 
-//    size_t WMatrow_pitch;
-//    cutilSafeCall(cudaMallocPitch(&d_WMatrowPtrT,&WMatrow_pitch,(size_wanted+1)*sizeof(int),N_imgs));
-
-
-//    can avoid this by using 2D malloc I think!
-//    cudaPitchedPtr d_dual_q;
-//    cudaExtent extent = make_cudaExtent(sizeof(float)*N_cols_low_img,N_rows_low_img,N_imgs);
-//    cudaMalloc3D(&d_dual_q,extent);
+    size_t WMatrow_pitchT;
+    cutilSafeCall(cudaMallocPitch(&d_WMatrowPtrT,&WMatrow_pitchT,(size_wanted+1)*sizeof(int),N_imgs));
 
 
-//    cout<<"everything looks okay!"<<endl;
+    //can avoid this by using 2D malloc I think!
+//    N_imgs = 700;
+
+    float *d_dual_q;
+    size_t d_dual_q_pitch;
+    cutilSafeCall(cudaMallocPitch(&d_dual_q,&d_dual_q_pitch,(size_have)*sizeof(float),N_imgs));
+    cutilSafeCall(cudaMemset2D(d_dual_q,d_dual_q_pitch,0,(size_have)*sizeof(float),N_imgs));
+
+    float *d_dual_save_qT;
+    size_t d_dual_save_qT_pitch;
+    cutilSafeCall(cudaMallocPitch(&d_dual_save_qT,&d_dual_save_qT_pitch,(size_wanted)*sizeof(float),N_imgs));
+    cutilSafeCall(cudaMemset2D(d_dual_save_qT,d_dual_save_qT_pitch,0,(size_wanted)*sizeof(float),N_imgs));
+
+
+    cout<<"everything looks okay!"<<endl;
 
 //   {
 
@@ -577,7 +586,7 @@ int main( int argc, char* argv[] )
     std::map<int,float>matindex_matvalT;
 
 
-    //DMatvalPtr, DMatrowPtr, DMatcolPtr,
+//    //DMatvalPtr, DMatrowPtr, DMatcolPtr,
     buildDMatrixLebesgueMeasure(size_have,size_wanted, N_rows_upimg, N_cols_upimg, scale, A, matindex_matval,matindex_matvalT);
 
     int NnzDMat = (int)matindex_matval.size();
@@ -622,25 +631,6 @@ int main( int argc, char* argv[] )
 
 
     cout << "Transpose data begins" << endl;
-//    index = 0;
-//    for(it = matindex_matvalT.begin(); it != matindex_matvalT.end(); it++ )
-//    {
-////        cout << (it->first)%size_have << " " ;//<< it->second << endl;
-
-//        index++;
-//    }
-
-//    cout << "Values ="<<endl;
-//    index = 0;
-//    for(it = matindex_matvalT.begin(); it != matindex_matvalT.end(); it++ )
-//    {
-
-
-////        cout << it->second << " ";
-//        index++;
-
-//    }
-
     index = 0; prev_row = -1;
     for(it = matindex_matvalT.begin(); it != matindex_matvalT.end(); it++ )
     {
@@ -672,7 +662,7 @@ int main( int argc, char* argv[] )
     cout << endl;
 
 
-//    cout << "Transpose Data ends " << endl;
+////    cout << "Transpose Data ends " << endl;
 
 
 
@@ -705,8 +695,8 @@ int main( int argc, char* argv[] )
     cout << endl;
 
 
-//    cout <<"A Matrix" << endl;
-//    cout << A << endl;
+////    cout <<"A Matrix" << endl;
+////    cout << A << endl;
 
 
     cout << "DMatrowPtr = " << endl;
@@ -744,7 +734,7 @@ int main( int argc, char* argv[] )
     cout<< "cu sparse initialised!"<<endl;
 
 
-//    size_t imagePitchFloat;
+////    size_t imagePitchFloat;
 
     float *d_DMatvalPtr;
     int *d_DMatcolPtr;
@@ -768,9 +758,9 @@ int main( int argc, char* argv[] )
     float *h_A_copy = new float[size_have*size_wanted];
     float *h_AxT;
 
-    int output_vector_size = size_have;
-//    cout<<"Init the various csr format pointers!"<<endl;
-//    getchar();
+//    int output_vector_size = size_have;
+////    cout<<"Init the various csr format pointers!"<<endl;
+////    getchar();
 
     cutilSafeCall(cudaMalloc((void**)&d_DMatvalPtr, NnzDMat*sizeof (float)));
     cutilSafeCall(cudaMalloc((void**)&d_DMatcolPtr, NnzDMat*sizeof (int)));
@@ -781,17 +771,14 @@ int main( int argc, char* argv[] )
     cutilSafeCall(cudaMalloc((void**)&d_DMatrowPtrT, (size_wanted+1)*sizeof(int)));
 
 
-//    cutilSafeCall(cudaMalloc((void**)&d_A, (size_have)*sizeof(float)*size_wanted));
-//    cutilSafeCall(cudaMalloc((void**)&d_AT, (size_have)*sizeof(float)*size_wanted));
-
     cutilSafeCall(cudaMalloc((void**)&d_Ax, (output_vector_size)*sizeof(float)));
     cutilSafeCall(cudaMalloc((void**)&d_AxT, (size_wanted)*sizeof(float)));
 
 
 
     cutilSafeCall(cudaMalloc((void**)&d_A_copy, (size_have)*sizeof(float)*size_wanted));
-    cutilSafeCall(cudaMalloc((void**)&d_img, sizeof(float)*input_vector_size));
-    cutilSafeCall(cudaMalloc((void**)&d_imgT, sizeof(float)*size_have));
+    cutilSafeCall(cudaMalloc((void**)&d_img, sizeof(float)*size_wanted));
+//    cutilSafeCall(cudaMalloc((void**)&d_imgT, sizeof(float)*size_have));
 
 
 
@@ -805,265 +792,98 @@ int main( int argc, char* argv[] )
     cudaMemcpy(d_DMatrowPtrT, DMatrowPtrT, (size_wanted+1)*sizeof(int), cudaMemcpyHostToDevice);
 
 
-    cudaMemcpy(d_img, input_image_data_up, (input_vector_size)*sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_imgT, input_image_data_down, (size_have)*sizeof(float), cudaMemcpyHostToDevice);
-
-
-//    cudaMemcpy(d_DMatvalPtrT, DMatvalPtrT, NnzDMatT*sizeof(float), cudaMemcpyHostToDevice);
-//    cudaMemcpy(d_DMatcolPtrT, DMatcolPtrT, NnzDMatT*sizeof(int), cudaMemcpyHostToDevice);
-//    cudaMemcpy(d_DMatrowPtrT, DMatrowPtrT, (size_wanted+1)*sizeof(int), cudaMemcpyHostToDevice);
-//    cudaMemcpy(d_DMatrowPtrT, DMatrowPtrT, (size_wanted+1)*sizeof(int), cudaMemcpyHostToDevice);
-
-//    cutilSafeCall(cudaMemcpy2D(d_img,imagePitchFloat,input_image_up.data(),sizeof(float)*N_cols_upimg,sizeof(float)*N_cols_upimg,N_rows_upimg,cudaMemcpyHostToDevice));
+    cudaMemcpy(d_img, input_image_up.data(), (size_wanted)*sizeof(float), cudaMemcpyHostToDevice);
+//    cudaMemcpy(d_imgT, input_image_low.data(), (size_have)*sizeof(float), cudaMemcpyHostToDevice);
 
 
 
-    cout<< "After initialising the image!"<<endl;
+//    cout<< "After initialising the image!"<<endl;
 
 
-//    int* h_nnzPerRow;
-//    int* d_nnzPerRow;
-
-//    float* d_csrValA;
-//    float* h_csrValA;
-
-//    int* d_csrRowPtrA;
-//    int* h_csrRowPtrA;
-
-//    int* d_csrColIndA;
-//    int* h_csrColIndA;
+    h_Ax          = (float*)malloc(sizeof(float)*size_have);
+    h_AxT         = (float*)malloc(sizeof(float)*size_wanted);
 
 
-//    int* h_nnzPerRowT;
-//    int* d_nnzPerRowT;
+//    cusparseStatus_t status_t;
 
-//    float* d_csrValAT;
-//    float* h_csrValAT;
-
-//    int* d_csrRowPtrAT;
-//    int* h_csrRowPtrAT;
-
-//    int* d_csrColIndAT;
-//    int* h_csrColIndAT;
+//    status_t = cusparseScsr2dense(handle,size_have,size_wanted,descr,d_DMatvalPtr,d_DMatrowPtr,d_DMatcolPtr,d_A_copy,size_have);
+//    cudaMemcpy(h_A_copy,d_A_copy,sizeof(float)*size_wanted*size_have,cudaMemcpyDeviceToHost);
 
 
 
-
-
-//    cutilSafeCall(cudaMalloc((void**)&d_nnzPerRow, size_have*sizeof (int)));
-//    cutilSafeCall(cudaMalloc((void**)&d_csrRowPtrA, (size_have+1)*sizeof (int)));
-//    cutilSafeCall(cudaMalloc((void**)&d_csrColIndA, NnzDMat*sizeof (int)));
-//    cutilSafeCall(cudaMalloc((void**)&d_csrValA, NnzDMat*sizeof (float)));
-
-
-//    cutilSafeCall(cudaMalloc((void**)&d_nnzPerRowT, size_wanted*sizeof (int)));
-//    cutilSafeCall(cudaMalloc((void**)&d_csrRowPtrAT, (size_wanted+1)*sizeof (int)));
-//    cutilSafeCall(cudaMalloc((void**)&d_csrColIndAT, NnzDMatT*sizeof (int)));
-//    cutilSafeCall(cudaMalloc((void**)&d_csrValAT, NnzDMatT*sizeof (float)));
-
-
-
-//    h_nnzPerRow  = (int*)malloc(sizeof(int)*size_have);
-//    h_csrValA    = (float*)malloc(sizeof(float)*NnzDMat);
-//    h_csrRowPtrA = (int*)malloc(sizeof(int)*(size_have+1));
-//    h_csrColIndA = (int*)malloc(sizeof(int)*size_have);
-//    h_A          = (float*)malloc(sizeof(float)*size_have*size_wanted);
-      h_Ax          = (float*)malloc(sizeof(float)*output_vector_size);
-      h_AxT         = (float*)malloc(sizeof(float)*size_wanted);
-
-
-
-//    h_nnzPerRowT  = (int*)malloc(sizeof(int)*size_wanted);
-//    h_csrValAT    = (float*)malloc(sizeof(float)*NnzDMatT);
-//    h_csrRowPtrAT = (int*)malloc(sizeof(int)*(size_wanted+1));
-//    h_csrColIndAT = (int*)malloc(sizeof(int)*size_wanted);
-//    h_AT          = (float*)malloc(sizeof(float)*size_have*size_wanted);
-
-
-
-//    for (int i  = 0 ; i < size_have;i++)
-//        h_nnzPerRow[i] = 4;
-
-//    for (int i  = 0 ; i < size_wanted;i++)
-//        h_nnzPerRowT[i] = 1;
-
-
-
-//    cout << endl;
-//    index = 0;
-//    int indexT = 0;
 //    for(int i = 0 ; i < size_have ; i++)
 //    {
 //        for(int j = 0 ; j < size_wanted; j++)
 //        {
 //            index = i*size_wanted+j;
-//            h_A[index] = A(i,j);
-
-//            indexT = j*size_have +i;
-//            h_AT[indexT] = A(i,j);
-
+//            h_A_copy[index] = A(i,j);
 //        }
 //    }
 
-
-
-//    cudaMemcpy(d_A,h_A,sizeof(float)*size_have*size_wanted,cudaMemcpyHostToDevice );
-//    cudaMemcpy(d_nnzPerRow,h_nnzPerRow,sizeof(int)*size_have,cudaMemcpyHostToDevice );
-
-
-//    cudaMemcpy(d_AT,h_AT,sizeof(float)*size_have*size_wanted,cudaMemcpyHostToDevice );
-//    cudaMemcpy(d_nnzPerRowT,h_nnzPerRowT,sizeof(int)*size_wanted,cudaMemcpyHostToDevice );
-
-
-//   cusparseSdense2csr(handle,size_have,size_wanted,descr,d_A,size_have,d_nnzPerRow,d_csrValA,d_csrRowPtrA,d_csrColIndA);
-
-//   cusparseSdense2csr(handle,size_wanted,size_have,descr,d_AT,size_wanted,d_nnzPerRowT,d_csrValAT,d_csrRowPtrAT,d_csrColIndAT);
-
-
-
-
-//   cudaMemcpy(h_csrValA,d_csrValA,sizeof(float)*NnzDMat,cudaMemcpyDeviceToHost );
-//   cudaMemcpy(h_csrRowPtrA,d_csrRowPtrA,sizeof(int)*(size_have+1),cudaMemcpyDeviceToHost );
-//   cudaMemcpy(h_csrColIndA,d_csrColIndA,sizeof(int)*NnzDMat,cudaMemcpyDeviceToHost );
-
-
-//   cudaMemcpy(h_csrValAT,d_csrValAT,sizeof(float)*NnzDMatT,cudaMemcpyDeviceToHost );
-//   cudaMemcpy(h_csrRowPtrAT,d_csrRowPtrAT,sizeof(int)*(size_wanted+1),cudaMemcpyDeviceToHost );
-//   cudaMemcpy(h_csrColIndAT,d_csrColIndAT,sizeof(int)*NnzDMatT,cudaMemcpyDeviceToHost );
-
-
-//   cout <<"\n Here is the csrRowPtr at Host" << endl;
-//   for(int i = 0 ; i < size_have+1; i++)
-//   {
-//       cout << h_csrRowPtrA[i]<<" ";
-//   }
-//   cout << endl;
-
-//   for(int i = 0 ; i < NnzDMat ; i++)
-//   {
-//       cout << h_csrColIndA[i] << " ";
-//   }
-//   cout << endl;
-
-
-//   cout <<"\n Here is the csrRowPtrT at Host" << endl;
-//   for(int i = 0 ; i < size_wanted+1; i++)
-//   {
-//       cout << h_csrRowPtrAT[i]<<" ";
-//   }
-//   cout << endl;
-
-//   cout << "csrcolIndAT " << endl;
-//   for(int i = 0 ; i < NnzDMatT ; i++)
-//   {
-//       cout << h_csrColIndAT[i] << " ";
-//   }
-//   cout << endl;
-
-//   for(int i = 0 ; i < NnzDMatT ; i++)
-//   {
-//       cout << h_csrValAT[i]<< " ";
-//   }
-//   cout << endl;
-
-
-    cusparseStatus_t status_t;
-
-    status_t = cusparseScsr2dense(handle,size_have,size_wanted,descr,d_DMatvalPtr,d_DMatrowPtr,d_DMatcolPtr,d_A_copy,size_have);
-    cudaMemcpy(h_A_copy,d_A_copy,sizeof(float)*size_wanted*size_have,cudaMemcpyDeviceToHost);
-
-//    status_t = cusparseScsr2dense(handle,size_wanted,size_have,descr,d_DMatvalPtrT,d_DMatrowPtrT,d_DMatcolPtrT,d_A_copyT,size_wanted);
-//    cudaMemcpy(h_A_copyT,d_A_copyT,sizeof(float)*size_wanted*size_have,cudaMemcpyDeviceToHost);
-
-
-    for(int i = 0 ; i < size_have ; i++)
-    {
-        for(int j = 0 ; j < size_wanted; j++)
-        {
-            index = i*size_wanted+j;
-            h_A_copy[index] = A(i,j);
-        }
-    }
-
-    cout<<"A = "<<endl;
-    for(int i = 0 ; i < size_have ; i++)
-    {
-        for(int j = 0 ; j < size_wanted; j++)
-        {
-            int index = i*size_wanted+j;
-            cout<<h_A_copy[index] <<" ";
-        }
-        cout<<endl;
-    }
-
-
-
-
-
-    {
-        ScopedCuTimer cuTime("multiplication time");
-        status = cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_have, size_wanted, 1.0, descr, d_DMatvalPtr, d_DMatrowPtr, d_DMatcolPtr, d_img, 0.0, d_Ax);
-    }
-
-    {
-        ScopedCuTimer cuTime("transpose multiplication time");
-        status = cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_have, 1.0, descr, d_DMatvalPtrT, d_DMatrowPtrT, d_DMatcolPtrT, d_imgT, 0.0, d_AxT);
-    }
-
+//    cout<<"A = "<<endl;
+//    for(int i = 0 ; i < size_have ; i++)
 //    {
-//        ScopedCuTimer cuTime("second multiplication time");
-//        status = cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_have, size_wanted, 1.0, descr, d_DMatvalPtr, d_DMatrowPtr, d_DMatcolPtr, d_AxT, 0.0, d_Ax);
-//    }
-
-
-    cudaMemcpy(h_Ax,d_Ax,sizeof(float)*output_vector_size,cudaMemcpyDeviceToHost);
-
-    cout<< endl<<"cusparse multiplication result!"<<endl;
-    for(int i = 0 ; i < output_vector_size ;i++)
-    {
-        cout<<h_Ax[i]<<" ";
-    }
-    cout<<endl;
-
-    cudaMemcpy(h_AxT,d_AxT,sizeof(float)*size_wanted,cudaMemcpyDeviceToHost);
-
-    cout<< endl<<"cusparse multiplication transpose result!"<<endl;
-    for(int i = 0 ; i < size_wanted ;i++)
-    {
-        cout<<h_AxT[i]<<" ";
-    }
-    cout<<endl;
-
-//    for(int i = 0 ; i < N_rows_upimg ; i++)
-//    {
-//        for(int j =0; j < N_cols_upimg ; j++)
+//        for(int j = 0 ; j < size_wanted; j++)
 //        {
-//            cout<<"("<<i<<","<<j<<")="<<input_image_data_up[j+i*N_cols_upimg]<<" ";
+//            int index = i*size_wanted+j;
+//            cout<<h_A_copy[index] <<" ";
 //        }
-
+//        cout<<endl;
 //    }
 
-//    cout<<"input image is"<<endl;
-//    for(int i = 0 ; i < size_have ;i++)
+
+
+
+
 //    {
-//        cout<<input_image_data_low[i]<<" ";
+//        ScopedCuTimer cuTime("multiplication time");
+//        status = cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_have, size_wanted, 1.0, descr, d_DMatvalPtr, d_DMatrowPtr, d_DMatcolPtr, d_img, 0.0, d_Ax);
+//    }
+
+//    {
+//        ScopedCuTimer cuTime("transpose multiplication time");
+//        status = cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_have, 1.0, descr, d_DMatvalPtrT, d_DMatrowPtrT, d_DMatcolPtrT, d_imgT, 0.0, d_AxT);
+//    }
+
+
+
+
+//    cudaMemcpy(h_Ax,d_Ax,sizeof(float)*output_vector_size,cudaMemcpyDeviceToHost);
+
+//    cout<< endl<<"cusparse multiplication result!"<<endl;
+//    for(int i = 0 ; i < output_vector_size ;i++)
+//    {
+//        cout<<h_Ax[i]<<" ";
+//    }
+//    cout<<endl;
+
+//    cudaMemcpy(h_AxT,d_AxT,sizeof(float)*size_wanted,cudaMemcpyDeviceToHost);
+
+//    cout<< endl<<"cusparse multiplication transpose result!"<<endl;
+//    for(int i = 0 ; i < size_wanted ;i++)
+//    {
+//        cout<<h_AxT[i]<<" ";
 //    }
 //    cout<<endl;
 
 
-    cout << "N_rows_low_img = " << N_rows_low_img << endl;
 
-    CVD::Image<CVD::byte> dsampledImage = CVD::Image<CVD::byte>(ImageRef(N_cols_low_img,N_rows_low_img));
+//    cout << "N_rows_low_img = " << N_rows_low_img << endl;
 
-    for(int row = 0 ; row < N_rows_low_img ; row++)
-    {
-        for(int col = 0 ; col < N_cols_low_img ; col++)
-        {
-            dsampledImage[ImageRef(col,row)] = (unsigned char)(h_Ax[row*N_cols_low_img+col]*255.0f);
-        }
-    }
+//    CVD::Image<CVD::byte> dsampledImage = CVD::Image<CVD::byte>(ImageRef(N_cols_low_img,N_rows_low_img));
 
-    img_save(dsampledImage,"dsampledImage.png");
+//    for(int row = 0 ; row < N_rows_low_img ; row++)
+//    {
+//        for(int col = 0 ; col < N_cols_low_img ; col++)
+//        {
+//            dsampledImage[ImageRef(col,row)] = (unsigned char)(h_Ax[row*N_cols_low_img+col]*255.0f);
+//        }
+//    }
+
+//    img_save(dsampledImage,"dsampledImage.png");
+
+
+// ######################### Un comment from here #########################
 
 
 
