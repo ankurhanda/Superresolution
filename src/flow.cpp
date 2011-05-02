@@ -230,8 +230,8 @@ int read_horizontal_vertical_flow(float *u, float *v, int img_no, int N_rows_upi
 }
 
 
-void buildWMatrixBilinearInterpolation(int N_imgs, int size_wanted, int N_rows_upimg, int N_cols_upimg, std::vector< std::map<int, float> >& h_vectorofMaps,
-                                       TooN::Matrix<>& W)
+void buildWMatrixBilinearInterpolation(int N_imgs, int size_wanted, int N_rows_upimg, int N_cols_upimg, std::vector< std::map<int, float> >& h_vectorofMaps)//,
+                                       //TooN::Matrix<>& W)
 {
 
     float *u, *v;
@@ -262,12 +262,13 @@ void buildWMatrixBilinearInterpolation(int N_imgs, int size_wanted, int N_rows_u
 
 
         int index = 0;
+        int indexT = 0;
 //        rowPtr[img_no-1][0]=0;
 
         int row_index = 0;
         int idx = 0;
-        int row_tT = 0;
-        int col_tT = 0;
+//        int row_tT = 0;
+//        int col_tT = 0;
 
         for (int row = 0 ; row < N_rows_upimg ; row++)
         {
@@ -276,13 +277,6 @@ void buildWMatrixBilinearInterpolation(int N_imgs, int size_wanted, int N_rows_u
 
                 float horizontal_flow = ((float)(rand())/RAND_MAX)*2.0f; //u[col + row*N_cols_upimg];
                 float   vertical_flow = ((float)(rand())/RAND_MAX)*2.0f; //v[col + row*N_cols_upimg];
-
-                cout<<"horizontal_flow = " <<horizontal_flow << endl;
-                cout<<"vertical_flow = " <<vertical_flow << endl;
-
-                cout<<"col+horizontal_flow = " <<col+horizontal_flow << endl;
-                cout<<"row+vertical_flow = " <<row+vertical_flow << endl;
-
 
                 float x_ = col*1.0f+horizontal_flow;
                 float y_ = row*1.0f+vertical_flow;
@@ -293,99 +287,49 @@ void buildWMatrixBilinearInterpolation(int N_imgs, int size_wanted, int N_rows_u
                 x_ = min(x_,(N_cols_upimg-1)*1.0f);
                 y_ = min(y_,(N_rows_upimg-1)*1.0f);
 
-
-
-
-//                float x_ = minf((N_cols_upimg-1)*1.0f, max(0.0f,col*1.0f + horizontal_flow));
-//                float y_ = min((N_rows_upimg-1)*1.0f, max(0.0f,row*1.0f +   vertical_flow));
-
-                cout<< "x_ "<< x_ << endl;
-                cout<< "y_ "<< y_ << endl;
-
                 int flr_x = (int)floor(x_);
                 int flr_y = (int)floor(y_);
 
                 float x_ratio = x_ - flr_x;
                 float y_ratio = y_ - flr_y;
 
-                cout<<"("<<flr_y<<","<<flr_x<<") = "<< (1-x_ratio)*(1-y_ratio) <<endl;
-
                 idx = ((int)flr_y)*N_cols_upimg+ ((int)flr_x) ;
                 index = idx + row_index*size_wanted;
-                row_tT  = index - (index/size_wanted)*size_wanted;
-                col_tT  = (index - row_tT)/size_wanted;
-                index = row_tT*size_wanted + col_tT;
-                cout<< "row_tT =" << row_tT << ", col_tT ="<<col_tT <<endl;
-                W(row_index,idx) = (1-x_ratio)*(1-y_ratio);
-                cout<< "index = " << index << endl;
-                h_vectorofMaps[img_no-1][index] = (1-x_ratio)*(1-y_ratio);
+                indexT = idx*size_wanted + row_index;//*size_wanted;
+//                h_vectorofMaps[img_no-1][index] = (1-x_ratio)*(1-y_ratio);
+                h_vectorofMaps[img_no-1][indexT] = (1-x_ratio)*(1-y_ratio);
 
 
                 if ( flr_x+1 < N_cols_upimg )
                 {
-                    cout<<"("<<flr_y<<","<<flr_x+1<<") = "<< (x_ratio)*(1-y_ratio) <<endl;
                     idx = ((int)flr_y)*N_cols_upimg + ((int)flr_x+1);
                     index = idx + row_index*size_wanted;
-                    row_tT  = index - (index/size_wanted)*size_wanted;
-                    col_tT  = (index - row_tT)/size_wanted;
-                    index = row_tT*size_wanted + col_tT;
-                    cout<< "row_tT =" << row_tT << ", col_tT ="<<col_tT <<endl;
-                    cout<< "index = " << index << endl;
-                    h_vectorofMaps[img_no-1][index] = x_ratio*(1-y_ratio);
-                    W(row_index,idx) = x_ratio*(1-y_ratio);
+                    indexT = idx*size_wanted + row_index;//*size_wanted;
+
+//                    h_vectorofMaps[img_no-1][index] = x_ratio*(1-y_ratio);
+                    h_vectorofMaps[img_no-1][indexT] = x_ratio*(1-y_ratio);
                 }
 
                 if ( flr_y+1 < N_rows_upimg)
                 {
-                    cout<<"("<<flr_y+1<<","<<flr_x<<") = "<< (1-x_ratio)*(y_ratio) <<endl;
                     idx = ((int)flr_y+1)*N_cols_upimg + ((int)flr_x);
                     index = idx + row_index*size_wanted;
-                    row_tT  = index - (index/size_wanted)*size_wanted;
-                    col_tT  = (index - row_tT)/size_wanted;
-                    index = row_tT*size_wanted + col_tT;
-                    cout<< "row_tT =" << row_tT << ", col_tT ="<<col_tT <<endl;
-                    cout<< "index = " << index << endl;
-                    h_vectorofMaps[img_no-1][index] = (1-x_ratio)*(y_ratio);
-                    W(row_index,idx) = (1-x_ratio)*(y_ratio);
+                    indexT = idx*size_wanted + row_index;
+
+//                    h_vectorofMaps[img_no-1][index] = (1-x_ratio)*(y_ratio);
+                    h_vectorofMaps[img_no-1][indexT] = (1-x_ratio)*(y_ratio);
                 }
 
                 if ( flr_y+1 < N_rows_upimg && flr_x+1 < N_cols_upimg)
                 {
-                    cout<<"("<<flr_y+1<<","<<flr_x+1<<") = "<< (x_ratio)*(y_ratio) <<endl;
                     idx = ((int)flr_y+1)*N_cols_upimg + ((int)flr_x+1);
                     index = idx + row_index*size_wanted;
-                    row_tT  = index - (index/size_wanted)*size_wanted;
-                    col_tT  = (index - row_tT)/size_wanted;
-                    index = row_tT*size_wanted + col_tT;
-                    cout<< "row_tT =" << row_tT << ", col_tT ="<<col_tT <<endl;
-                    cout<< "index = " << index << endl;
-                    h_vectorofMaps[img_no-1][index] = (x_ratio)*(y_ratio);
-                    W(row_index,idx) = (x_ratio)*(y_ratio);
+                    indexT = idx*size_wanted + row_index;
+
+//                    h_vectorofMaps[img_no-1][index] = (x_ratio)*(y_ratio);
+                    h_vectorofMaps[img_no-1][indexT] = (x_ratio)*(y_ratio);
 
                 }
-
-
-
-//                index = idx + row_index*size_wanted;
-
-
-//                valPtr[img_no-1][index+0]  = (1-x_ratio)*(1-y_ratio);
-//                colPtr[img_no-1][index+0]  = ((int)x_ + (int)y_*N_cols_upimg);
-
-//                valPtr[img_no-1][index+1]  = (x_ratio)*(1-y_ratio);
-//                colPtr[img_no-1][index+1]  = ((int)x_+1 + (int)y_*N_cols_upimg);
-
-//                valPtr[img_no-1][index+2]  = (1-x_ratio)*y_ratio;
-//                colPtr[img_no-1][index+2]  = ((int)x_ + ((int)y_+1)*N_cols_upimg);
-
-//                valPtr[img_no-1][index+3]  = (x_ratio)*y_ratio;
-//                colPtr[img_no-1][index+3]  = ((int)x_+1 + ((int)y_+1)*N_cols_upimg);
-
-
-//                rowPtr[img_no-1][row_index] = index;
-//                row_index++;
-//                index = index+4;
-
                  row_index++;
             }
 
@@ -399,7 +343,7 @@ void buildWMatrixBilinearInterpolation(int N_imgs, int size_wanted, int N_rows_u
 }
 
 
-void buildDMatrixLebesgueMeasure(int Nnz, int size_have, int size_wanted,int N_rows_upimg, int N_cols_upimg, /*float *DMatvalPtr, int *DMatrowPtr, int *DMatcolPtr,*/
+void buildDMatrixLebesgueMeasure(int size_have, int size_wanted,int N_rows_upimg, int N_cols_upimg, /*float *DMatvalPtr, int *DMatrowPtr, int *DMatcolPtr,*/
                                  float scale_factor, TooN::Matrix<>&A, std::map<int, float>& matindex_matval, std::map<int, float>&matindex_matvalT )
 {
 
@@ -444,6 +388,7 @@ void buildDMatrixLebesgueMeasure(int Nnz, int size_have, int size_wanted,int N_r
                  left_over_row = 0.0;
 
              TooN::Vector<>row_vector(row_vec_size);
+             row_vector = TooN::Zeros(row_vec_size);
              for(int i = 0; i < row_vec_size; i++)
                      row_vector[i]= row_vec[i];
 
@@ -474,21 +419,27 @@ void buildDMatrixLebesgueMeasure(int Nnz, int size_have, int size_wanted,int N_r
                     left_over_col = 0.0f;
 
                 TooN::Vector<>col_vector(col_vec_size);
+                col_vector = TooN::Zeros(col_vec_size);
+
+
                 for(int i = 0; i < col_vec_size; i++)
                         col_vector[i]= col_vec[i];
 
                 TooN::Matrix<>weightMat = row_vector.as_col()*col_vector.as_row();
 
-                int sumMat = 0 ;
+                float sumMat = 0 ;
                 for (int row_mat = 0 ; row_mat < weightMat.num_rows() ; row_mat++)
                 {
                     for (int col_mat = 0 ; col_mat < weightMat.num_cols() ; col_mat++)
                     {
+//                        cout<< weightMat(row_mat,col_mat)<<" ";
                         sumMat += (weightMat(row_mat,col_mat));
                     }
+//                    cout<<endl;
                 }
 
-//                weightMat = weightMat/(sumMat);
+//                cout<<"sumMat ="<<sumMat <<endl;
+                weightMat = weightMat/(sumMat);
 
 //                {
 //                    DMatrowPtr[row_index] = index;
@@ -499,27 +450,32 @@ void buildDMatrixLebesgueMeasure(int Nnz, int size_have, int size_wanted,int N_r
                     for (int col_mat = 0 ; col_mat < weightMat.num_cols(); col_mat++)
                     {
                         int col_number = (prev_row_int+row_mat)*N_cols_upimg + (prev_col_int+col_mat);
-                        if ( index < Nnz)
+
+                        if( col_number < N_rows_upimg*N_cols_upimg)
+
                         {
                             static float val = 1;
 
+                            A(row_index,col_number)= weightMat(row_mat,col_mat);
 
-                            A(row_index,col_number)= val;//weightMat(row_mat,col_mat);
+//                            int idx = (row_index)*size_wanted + (col_number);
+//                            int idx_T = (row_index) + (col_number)*size_have;
 
-                            int idx = (row_index)*size_wanted + (col_number);
-                            int idx_T = (row_index) + (col_number)*size_have;
+//                            int row_t = idx - (idx/size_have)*size_have;
+//                            int row_tT = idx_T - (idx_T/size_wanted)*size_wanted;
 
-                            int row_t = idx - (idx/size_have)*size_have;
-                            int row_tT = idx_T - (idx_T/size_wanted)*size_wanted;
+//                            int col_t = (idx - row_t)/size_have;
+//                            int col_tT = (idx_T - row_tT)/size_wanted;
 
-                            int col_t = (idx - row_t)/size_have;
-                            int col_tT = (idx_T - row_tT)/size_wanted;
+//                            int key  = row_t*size_wanted + col_t;
+//                            int keyT = row_tT*size_have + col_tT;
 
-                            int key  = row_t*size_wanted + col_t;
-                            int keyT = row_tT*size_have + col_tT;
 
-                            matindex_matval[key]   = val;//weightMat(row_mat,col_mat);
-                            matindex_matvalT[keyT] = val;//weightMat(row_mat,col_mat);
+                            int key  = row_index*size_wanted + col_number;
+                            int keyT = row_index + col_number*size_have;//row_index*size_have+col_number;
+
+                            matindex_matval[key]   = weightMat(row_mat,col_mat);
+                            matindex_matvalT[keyT] = weightMat(row_mat,col_mat);
 
                             index++;
 
@@ -534,6 +490,8 @@ void buildDMatrixLebesgueMeasure(int Nnz, int size_have, int size_wanted,int N_r
             prev_row = prev_row + row_increment;
 
         }
-//        DMatrowPtr[size_have] = Nnz;
+
+        cout<<"All done!"<<endl;
   }
+
 
