@@ -42411,43 +42411,123 @@ inline void print_NVCC_min_spec(const char *sSDKsample, const char *sNVCCReq, co
 }
 # 6 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu" 2
 # 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
-__attribute__((global)) void kernel_Mult_Wi_u(float *u, float *horizontal_flow, float* vertical_flow, int imgNo,
-                                 unsigned int stride, unsigned int mesh_width, unsigned int mesh_height)
+__attribute__((global)) void kernel_Mult_Wi_u(float *out, int outStride, float *d_u_, int u_Stride, float *horizontal_flow, float* vertical_flow, int velStride,
+                                 int imgNo, int width, int height)
 {
 
 
-    //p^{n+1} = \frac{p^n + \sigma \nabla u^{n}}{1 + sigma*epsilon_u/ lambda}
-    //p^{n+1} = p^{n+1} / max ( 1, |p^{n+1}|/lambda )
+    unsigned int x = blockIdx.x*blockDim.x + threadIdx.x;
+    unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
 
-//    unsigned int x = blockIdx.x*blockDim.x + threadIdx.x;
-//    unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
+    float x_ = x;
+    float y_ = y;
 
-//    // write output vertex
-//    px[y*stride+x] = (px[y*stride+x] + sigma* ux_[y*stride+x])/(1+sigma*epsilon_u/lambda);
-//    py[y*stride+x] = (py[y*stride+x] + sigma* uy_[y*stride+x])/(1+sigma*epsilon_u/lambda);
+    x_ = ( ((width-1) < (( ((0.0f) > (x_ + horizontal_flow[y*velStride+x])) ? (0.0f) : (x_ + horizontal_flow[y*velStride+x]) ))) ? (width-1) : (( ((0.0f) > (x_ + horizontal_flow[y*velStride+x])) ? (0.0f) : (x_ + horizontal_flow[y*velStride+x]) )) );
+    y_ = ( ((height-1) < (( ((0.0f) > (y_ + vertical_flow[y*velStride+x])) ? (0.0f) : (y_ + vertical_flow[y*velStride+x]) ))) ? (height-1) : (( ((0.0f) > (y_ + vertical_flow[y*velStride+x])) ? (0.0f) : (y_ + vertical_flow[y*velStride+x]) )) );
 
-//    float pxval = px[y*stride+x];
-//    float pyval = py[y*stride+x];
+    int flr_x = floor(x_);
+    int flr_y = floor(y_);
 
-//    float reprojection = 0;
-//    reprojection   = sqrt(pxval*pxval + pyval*pyval);
-//    reprojection   = max(1,reprojection/lambda);
+    float x_ratio = x_ - flr_x;
+    float y_ratio = y_ - flr_y;
 
-//    px[y*stride+x] = px[y*stride+x]/reprojection;
-//    py[y*stride+x] = py[y*stride+x]/reprojection;
+    float val = ((1-x_ratio)*(1-y_ratio))*d_u_[flr_y*u_Stride+flr_x];
 
+    if ( flr_x + 1 < width )
+        val += (x_ratio*(1-y_ratio))*d_u_[flr_y*u_Stride + (flr_x+1)];
 
+    if ( flr_y + 1 < height )
+    {
+        val += ((1-x_ratio)*y_ratio)*d_u_[(flr_y+1)*u_Stride + (flr_x)];
+
+        if ( flr_x+1 < width )
+            val += (x_ratio*y_ratio)*d_u_[(flr_y+1)*u_Stride + (flr_x+1)];
+    }
+
+    out[y*outStride+x] = val;
 }
 
 
 
 // Wrapper for the __global__ call that sets up the kernel call
-extern "C" void launch_kernel_Mult_Wi_u(float *u, float *horizontal_flow, float* vertical_flow, int imgNo,
-                                              unsigned int stride, unsigned int mesh_width, unsigned int mesh_height)
+extern "C" void launch_kernel_Mult_Wi_u(float *out, int outStride, float *d_u_, int u_Stride, float *horizontal_flow, float* vertical_flow, int velStride,
+                                         int imgNo, int width, int height)
 {
     // execute the kernel
     dim3 block(8, 8, 1);
-    dim3 grid(mesh_width / block.x, mesh_height / block.y, 1);
-    kernel_Mult_Wi_u<<< grid, block>>>(u, horizontal_flow, vertical_flow, imgNo, stride, mesh_width, mesh_height);
-    __cutilGetLastError ("execution failed\n", "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu", 53);
+    dim3 grid(width / block.x, height / block.y, 1);
+    kernel_Mult_Wi_u<<< grid, block>>>(out, outStride, d_u_, u_Stride, horizontal_flow, vertical_flow, velStride, imgNo, width, height);
+    __cutilGetLastError ("execution failed\n", "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu", 61);
 }
+
+
+__attribute__((global)) void kernel_blur(float *out, int outStride, float *in, int inStride, float* blur_kernel, int blurWidth, int width, int height)
+{
+
+    unsigned int x = blockIdx.x*blockDim.x + threadIdx.x;
+    unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
+
+    float val = 0;
+
+
+
+    for(int i = -blurWidth/2 ; i <= blurWidth/2 ; i++ )
+    {
+        for(int j = -blurWidth/2 ; j <= blurWidth/2 ; j++ )
+        {
+            if ( y+i < height && x+j < width )
+            {
+                val += blur_kernel[i*blurWidth+j]*in[(y+i)*inStride+(x+j)];
+            }
+        }
+    }
+
+    out[y*outStride+x] = val;
+
+}
+
+extern "C" void launch_kernel_blur(float *out, int outStride, float *in, int inStride, float* blur_kernel, int blurWidth, int width, int height)
+{
+    // execute the kernel
+    dim3 block(8, 8, 1);
+    dim3 grid(width / block.x, height / block.y, 1);
+    kernel_blur<<< grid, block>>>(out, outStride, in, inStride, blur_kernel, blurWidth, width, height);
+    __cutilGetLastError ("execution failed\n", "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu", 96);
+}
+
+
+
+
+//__global__ void launch_kernel_blurTranspose(float *out, int outStride, float *in, int inStride, float* blur_kernelT, int blurWidth)
+//{
+
+//    unsigned int x = blockIdx.x*blockDim.x + threadIdx.x;
+//    unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
+
+//    float val = 0;
+
+
+
+//    for(int i = -blurWidth/2 ; i <= blurWidth/2 ; i++ )
+//    {
+//        for(int j = -blurWidth/2 ; j <= blurWidth/2 ; j++ )
+//        {
+//            if ( y+i < Ny && x+j < Nx )
+//            {
+//                val += blur_kernel[i*blurWidth+j]*in[(y+i)*inStride+(x+j)];
+//            }
+//        }
+//    }
+
+//    out[y*outStride+x] = val;
+
+//}
+
+//extern "C" void launch_kernel_blurTranspose(float *out, int outStride, float *in, int inStride, float* blur_kernel, int blurWidth)
+//{
+//    // execute the kernel
+//    dim3 block(8, 8, 1);
+//    dim3 grid(mesh_width / block.x, mesh_height / block.y, 1);
+//    kernel_blur_Wi_u<<< grid, block>>>(out, outStide, in, inStride, blur_kernel, blurWidth);
+//    cutilCheckMsg("execution failed\n");
+//}

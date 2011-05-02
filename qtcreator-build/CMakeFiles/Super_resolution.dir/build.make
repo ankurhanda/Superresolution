@@ -100,11 +100,6 @@ CMakeFiles/Super_resolution.dir/src/main.cpp.o.provides: CMakeFiles/Super_resolu
 CMakeFiles/Super_resolution.dir/src/main.cpp.o.provides.build: CMakeFiles/Super_resolution.dir/src/main.cpp.o
 .PHONY : CMakeFiles/Super_resolution.dir/src/main.cpp.o.provides.build
 
-./Super_resolution_generated_kernel.cu.o: /home/ankur/NVIDIA_GPU_Computing_SDK/C/common/inc/cutil.h
-./Super_resolution_generated_kernel.cu.o: /home/ankur/NVIDIA_GPU_Computing_SDK/C/common/inc/cutil_inline.h
-./Super_resolution_generated_kernel.cu.o: /home/ankur/NVIDIA_GPU_Computing_SDK/C/common/inc/cutil_inline_bankchecker.h
-./Super_resolution_generated_kernel.cu.o: /home/ankur/NVIDIA_GPU_Computing_SDK/C/common/inc/cutil_inline_drvapi.h
-./Super_resolution_generated_kernel.cu.o: /home/ankur/NVIDIA_GPU_Computing_SDK/C/common/inc/cutil_inline_runtime.h
 ./Super_resolution_generated_kernel.cu.o: ../src/kernels/kernel.cu
 ./Super_resolution_generated_kernel.cu.o: /usr/include/_G_config.h
 ./Super_resolution_generated_kernel.cu.o: /usr/include/alloca.h
@@ -174,13 +169,10 @@ CMakeFiles/Super_resolution.dir/src/main.cpp.o.provides.build: CMakeFiles/Super_
 ./Super_resolution_generated_kernel.cu.o: /usr/local/cuda/include/builtin_types.h
 ./Super_resolution_generated_kernel.cu.o: /usr/local/cuda/include/channel_descriptor.h
 ./Super_resolution_generated_kernel.cu.o: /usr/local/cuda/include/common_functions.h
-./Super_resolution_generated_kernel.cu.o: /usr/local/cuda/include/cuComplex.h
-./Super_resolution_generated_kernel.cu.o: /usr/local/cuda/include/cuda.h
 ./Super_resolution_generated_kernel.cu.o: /usr/local/cuda/include/cuda_runtime.h
 ./Super_resolution_generated_kernel.cu.o: /usr/local/cuda/include/cuda_runtime_api.h
 ./Super_resolution_generated_kernel.cu.o: /usr/local/cuda/include/cuda_surface_types.h
 ./Super_resolution_generated_kernel.cu.o: /usr/local/cuda/include/cuda_texture_types.h
-./Super_resolution_generated_kernel.cu.o: /usr/local/cuda/include/cufft.h
 ./Super_resolution_generated_kernel.cu.o: /usr/local/cuda/include/device_functions.h
 ./Super_resolution_generated_kernel.cu.o: /usr/local/cuda/include/device_launch_parameters.h
 ./Super_resolution_generated_kernel.cu.o: /usr/local/cuda/include/device_types.h

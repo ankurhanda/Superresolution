@@ -5292,7 +5292,7 @@ struct _Z7textureI7ushort4Li3EL19cudaTextureReadMode1EE { struct textureReferenc
 # 82 "/usr/local/cuda/include/texture_fetch_functions.h"
 /*DEVICE_BUILTIN*/extern __attribute__((device)) uint4 __utexfetch(__texture_type__, float4, int);
 # 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-__attribute__((global)) extern void _Z12kernel_dualqiPPfS0_ffS0_fj(int, float **, float **, float, float, float **, float, unsigned);
+__attribute__((global)) extern void _Z41kernel_q_SubtractDBWiu_fAdd_yAndReprojectPfiS_iS_ifffii(float *, int, float *, int, float *, int, float, float, float, int, int);
 # 1 "/usr/local/cuda/include/common_functions.h" 1
 /*
  * Copyright 1993-2011 NVIDIA Corporation.  All rights reserved.
@@ -5475,64 +5475,54 @@ __attribute__((global)) extern void _Z12kernel_dualqiPPfS0_ffS0_fj(int, float **
 # 148 "/usr/local/cuda/include/common_functions.h" 2
 # 17 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu" 2
 # 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-__attribute__((global)) void _Z12kernel_dualqiPPfS0_ffS0_fj(
+__attribute__((global)) void _Z41kernel_q_SubtractDBWiu_fAdd_yAndReprojectPfiS_iS_ifffii(
 # 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-int N_imgs,
+float *result,
 # 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-float **q,
-# 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-float **DBWu_,
-# 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-float epsilon_d,
-# 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-float sigma,
-# 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-float **f,
-# 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-float xisqr,
-# 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-unsigned stride){
+int resultStride,
 # 16 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
+float *d_DBWiu,
+# 16 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
+int DBWiuStride,
+# 17 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
+float *d_fi,
+# 17 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
+int imgStride,
+# 18 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
+float sigma_q,
+# 18 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
+float xisqr,
+# 18 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
+float epsilon_d,
+# 19 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
+int width_down,
+# 19 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
+int height_down){
+# 20 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
 {
-# 22 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
- unsigned __cuda_local_var_42936_18_non_const_x;
-# 23 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
- unsigned __cuda_local_var_42937_18_non_const_y;
-# 22 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-__cuda_local_var_42936_18_non_const_x = (((blockIdx.x) * (blockDim.x)) + (threadIdx.x));
-# 23 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-__cuda_local_var_42937_18_non_const_y = (((blockIdx.y) * (blockDim.y)) + (threadIdx.y)); {
 # 26 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
- int img_no;
-# 26 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-img_no = 0;
-# 26 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-for (; (img_no < N_imgs); img_no++)
+ unsigned __cuda_local_var_42940_18_non_const_x;
 # 27 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
+ unsigned __cuda_local_var_42941_18_non_const_y;
+# 26 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
+__cuda_local_var_42940_18_non_const_x = (((blockIdx.x) * (blockDim.x)) + (threadIdx.x));
+# 27 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
+__cuda_local_var_42941_18_non_const_y = (((blockIdx.y) * (blockDim.y)) + (threadIdx.y));
+# 30 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
+if (((__cuda_local_var_42941_18_non_const_y * ((unsigned)resultStride)) + __cuda_local_var_42940_18_non_const_x) < ((unsigned)(width_down * height_down)))
+# 31 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
 {
-# 31 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
- float __cuda_local_var_42945_15_non_const_pxval;
-# 32 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
- float __cuda_local_var_42946_15_non_const_pyval;
+# 33 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
+ float __cuda_local_var_42947_14_non_const_result_val;
+# 33 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
+__cuda_local_var_42947_14_non_const_result_val = ((result[((__cuda_local_var_42941_18_non_const_y * ((unsigned)resultStride)) + __cuda_local_var_42940_18_non_const_x)]) + ((sigma_q * xisqr) * ((d_DBWiu[((__cuda_local_var_42941_18_non_const_y * ((unsigned)DBWiuStride)) + __cuda_local_var_42940_18_non_const_x)]) - (d_fi[((__cuda_local_var_42941_18_non_const_y * ((unsigned)imgStride)) + __cuda_local_var_42940_18_non_const_x)]))));
 # 34 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
- float __cuda_local_var_42948_15_non_const_reprojection;
-# 28 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-((q[img_no])[((__cuda_local_var_42937_18_non_const_y * stride) + __cuda_local_var_42936_18_non_const_x)]) = ( fdividef((((q[img_no])[((__cuda_local_var_42937_18_non_const_y * stride) + __cuda_local_var_42936_18_non_const_x)]) + ((sigma * xisqr) * (((DBWu_[img_no])[((__cuda_local_var_42937_18_non_const_y * stride) + __cuda_local_var_42936_18_non_const_x)]) - ((f[img_no])[((__cuda_local_var_42937_18_non_const_y * stride) + __cuda_local_var_42936_18_non_const_x)])))) , ((1.0F) + ( fdividef((sigma * epsilon_d) , xisqr)))));
-# 29 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-((q[img_no])[((__cuda_local_var_42937_18_non_const_y * stride) + __cuda_local_var_42936_18_non_const_x)]) = ( fdividef((((q[img_no])[((__cuda_local_var_42937_18_non_const_y * stride) + __cuda_local_var_42936_18_non_const_x)]) + ((sigma * xisqr) * (((DBWu_[img_no])[((__cuda_local_var_42937_18_non_const_y * stride) + __cuda_local_var_42936_18_non_const_x)]) - ((f[img_no])[((__cuda_local_var_42937_18_non_const_y * stride) + __cuda_local_var_42936_18_non_const_x)])))) , ((1.0F) + ( fdividef((sigma * epsilon_d) , xisqr)))));
-# 31 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-__cuda_local_var_42945_15_non_const_pxval = ((q[img_no])[((__cuda_local_var_42937_18_non_const_y * stride) + __cuda_local_var_42936_18_non_const_x)]);
-# 32 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-__cuda_local_var_42946_15_non_const_pyval = ((q[img_no])[((__cuda_local_var_42937_18_non_const_y * stride) + __cuda_local_var_42936_18_non_const_x)]);
-# 34 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-__cuda_local_var_42948_15_non_const_reprojection = (0.0F);
-# 35 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-__cuda_local_var_42948_15_non_const_reprojection = (((-1.0F) > (((1.0F) < ((q[img_no])[((__cuda_local_var_42937_18_non_const_y * stride) + __cuda_local_var_42936_18_non_const_x)])) ? (1.0F) : ((q[img_no])[((__cuda_local_var_42937_18_non_const_y * stride) + __cuda_local_var_42936_18_non_const_x)]))) ? (-1.0F) : (((1.0F) < ((q[img_no])[((__cuda_local_var_42937_18_non_const_y * stride) + __cuda_local_var_42936_18_non_const_x)])) ? (1.0F) : ((q[img_no])[((__cuda_local_var_42937_18_non_const_y * stride) + __cuda_local_var_42936_18_non_const_x)])));
-# 37 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-((q[img_no])[((__cuda_local_var_42937_18_non_const_y * stride) + __cuda_local_var_42936_18_non_const_x)]) = ( fdividef(((q[img_no])[((__cuda_local_var_42937_18_non_const_y * stride) + __cuda_local_var_42936_18_non_const_x)]) , __cuda_local_var_42948_15_non_const_reprojection));
+__cuda_local_var_42947_14_non_const_result_val = ( fdividef(__cuda_local_var_42947_14_non_const_result_val , ((1.0F) + ( fdividef((sigma_q * epsilon_d) , xisqr)))));
+# 36 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
+__cuda_local_var_42947_14_non_const_result_val = ((((-xisqr) * (1.0F)) > ((xisqr < __cuda_local_var_42947_14_non_const_result_val) ? xisqr : __cuda_local_var_42947_14_non_const_result_val)) ? ((-xisqr) * (1.0F)) : ((xisqr < __cuda_local_var_42947_14_non_const_result_val) ? xisqr : __cuda_local_var_42947_14_non_const_result_val));
 # 38 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-((q[img_no])[((__cuda_local_var_42937_18_non_const_y * stride) + __cuda_local_var_42936_18_non_const_x)]) = ( fdividef(((q[img_no])[((__cuda_local_var_42937_18_non_const_y * stride) + __cuda_local_var_42936_18_non_const_x)]) , __cuda_local_var_42948_15_non_const_reprojection));
+(result[((__cuda_local_var_42941_18_non_const_y * ((unsigned)resultStride)) + __cuda_local_var_42940_18_non_const_x)]) = __cuda_local_var_42947_14_non_const_result_val;
 # 39 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-} }
-# 42 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
+}
+# 41 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
 }}

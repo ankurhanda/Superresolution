@@ -23,25 +23,25 @@ __global__ void kernel_Mult_Wi_u(float *out, int outStride, float *d_u_, int u_S
     float x_ = x;
     float y_ = y;
 
-    x_ = min(Nx-1,max(0.0f,x_ + horizontal_flow[y*velStride+x]));
-    y_ = min(Ny-1,max(0.0f,y_ + vertical_flow[y*velStride+x]));
+    x_ = min(width-1,max(0.0f,x_ + horizontal_flow[y*velStride+x]));
+    y_ = min(height-1,max(0.0f,y_ + vertical_flow[y*velStride+x]));
 
-    float flr_x = floor(x_);
-    float flr_y = floor(y_);
+    int flr_x = floor(x_);
+    int flr_y = floor(y_);
 
     float x_ratio = x_ - flr_x;
     float y_ratio = y_ - flr_y;
 
     float val = ((1-x_ratio)*(1-y_ratio))*d_u_[flr_y*u_Stride+flr_x];
 
-    if ( flr_x + 1 < Nx )
+    if ( flr_x + 1 < width )
         val +=  (x_ratio*(1-y_ratio))*d_u_[flr_y*u_Stride + (flr_x+1)];
 
-    if ( flr_y + 1 < Ny )
+    if ( flr_y + 1 < height )
     {
         val +=  ((1-x_ratio)*y_ratio)*d_u_[(flr_y+1)*u_Stride + (flr_x)];
 
-        if ( flr_x+1 < Nx )
+        if ( flr_x+1 < width )
             val +=  (x_ratio*y_ratio)*d_u_[(flr_y+1)*u_Stride + (flr_x+1)];
     }
 
@@ -56,13 +56,13 @@ extern "C" void launch_kernel_Mult_Wi_u(float *out, int outStride, float *d_u_, 
 {
     // execute the kernel
     dim3 block(8, 8, 1);
-    dim3 grid(mesh_width / block.x, mesh_height / block.y, 1);
-    kernel_Mult_Wi_u<<< grid, block>>>(out, outStide, d_u_, u_Stride,  horizontal_flow, vertical_flow, velStride, imgNo, width, height);
+    dim3 grid(width / block.x, height / block.y, 1);
+    kernel_Mult_Wi_u<<< grid, block>>>(out, outStride, d_u_, u_Stride,  horizontal_flow, vertical_flow, velStride, imgNo, width, height);
     cutilCheckMsg("execution failed\n");
 }
 
 
-__global__ void launch_kernel_blur(float *out, int outStride, float *in, int inStride, float* blur_kernel, int blurWidth)
+__global__ void kernel_blur(float *out, int outStride, float *in, int inStride, float* blur_kernel, int blurWidth, int width, int height)
 {
 
     unsigned int x = blockIdx.x*blockDim.x + threadIdx.x;
@@ -76,7 +76,7 @@ __global__ void launch_kernel_blur(float *out, int outStride, float *in, int inS
     {
         for(int j = -blurWidth/2 ; j <= blurWidth/2 ; j++ )
         {
-            if ( y+i < Ny && x+j < Nx )
+            if ( y+i < height && x+j < width )
             {
                 val += blur_kernel[i*blurWidth+j]*in[(y+i)*inStride+(x+j)];
             }
@@ -87,12 +87,12 @@ __global__ void launch_kernel_blur(float *out, int outStride, float *in, int inS
 
 }
 
-extern "C" void launch_kernel_blur(float *out, int outStride, float *in, int inStride, float* blur_kernel, int blurWidth)
+extern "C" void launch_kernel_blur(float *out, int outStride, float *in, int inStride, float* blur_kernel, int blurWidth, int width, int height)
 {
     // execute the kernel
     dim3 block(8, 8, 1);
-    dim3 grid(mesh_width / block.x, mesh_height / block.y, 1);
-    kernel_blur<<< grid, block>>>(out, outStide, in, inStride, blur_kernel, blurWidth);
+    dim3 grid(width / block.x, height / block.y, 1);
+    kernel_blur<<< grid, block>>>(out, outStride, in, inStride, blur_kernel, blurWidth, width, height);
     cutilCheckMsg("execution failed\n");
 }
 

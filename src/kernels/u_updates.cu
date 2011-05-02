@@ -12,7 +12,7 @@
 #endif
 
 
-_global__ void kernel_derivative_u(float *ux_, float *uy_, float *u_, unsigned int stride, unsigned int width, unsigned int height )
+__global__ void kernel_derivative_u(float *ux_, float *uy_, float *u_, unsigned int stride, unsigned int width, unsigned int height )
 {
     unsigned int x = blockIdx.x*blockDim.x + threadIdx.x;
     unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
@@ -51,8 +51,8 @@ extern "C" void launch_kernel_derivative_u(float* ux_, float *uy_, float* u_, un
 
 
 
-__global__ void kernel_primalu(float tau, float *px, float *py, float xisqr, float *WiT_BiT_DiT_qi, int width, int height,
-                             unsigned int stride, int N_imgs)
+__global__ void kernel_primalu(float *px, float *py, float* u_, float *u, float epsilon_u, float tau, float xisqr, float *WiT_BiT_DiT_qi,
+                               unsigned int stride, unsigned int width_up, unsigned int height_up, int N_imgs)
 {
 
     //u^{n+1} = u^{n} - tau( -divp^{n+1} + \xi^{2} \sum_{i=1}^{N}(W^{T}B^{T}D^{T}q^{n+1} )
@@ -66,39 +66,39 @@ __global__ void kernel_primalu(float tau, float *px, float *py, float xisqr, flo
 
     float dxp = 0 , dyp = 0;
 
-    if ( x >= 1 && x < width )  dxp = d_px[y*stride+x] - d_px[y*stride+(x-1)];
+    if ( x >= 1 && x < width_up )  dxp = px[y*stride+x] - px[y*stride+(x-1)];
 
-    if ( y >= 1 && y < height ) dyp = d_py[y*stride+x] - d_py[(y-1)*stride+x];
+    if ( y >= 1 && y < height_up ) dyp = py[y*stride+x] - py[(y-1)*stride+x];
 
     float divp = dxp + dyp;
 
     float prev_u = u[y*stride+x];
 
-    int image_size = width*height;
+    int image_size = width_up*height_up;
 
     float sum_WiT_BiT_DiT_qi = 0;
 
     for(int i = 0 ; i < N_imgs; i++)
     {
-        sum_WiT_BiT_DiT_qi += WiT_BiT_DiT_qi[(y*stride+x)+(image_size)*i]
+        sum_WiT_BiT_DiT_qi += WiT_BiT_DiT_qi[(y*stride+x)+(image_size)*i];
     }
 
 
-    u[y*stride+x] = prev_u - tau*( -divp + xisqr*WiT_BiT_DiT_qi[y*stride+x]);
+    u[y*stride+x] = prev_u - tau*( -divp + xisqr*sum_WiT_BiT_DiT_qi);
 
-    u_[y*stride+x] = 2*u[y*stride+x] - prev;
+    u_[y*stride+x] = 2*u[y*stride+x] - prev_u;
 
 }
 
 
 // Wrapper for the __global__ call that sets up the kernel call
-extern "C" void launch_kernel_primal_u(float *px, float *py, float* ux_, float *uy_, float epsilon_u, float sigma, float lambda,
-                                              unsigned int stride, unsigned int mesh_width, unsigned int mesh_height)
+extern "C" void launch_kernel_primal_u(float *px, float *py, float* u_, float *u, float epsilon_u, float tau, float xisqr, float *WiT_BiT_DiT_qi,
+                                       unsigned int stride, unsigned int width_up, unsigned int height_up, int N_imgs)
 {
     // execute the kernel
     dim3 block(8, 8, 1);
-    dim3 grid(mesh_width / block.x, mesh_height / block.y, 1);
-    kernel_primalu<<< grid, block>>>(tau, px, py, xisqr, WiT_BiT_DiT_q, width, height, stride);
+    dim3 grid(width_up / block.x, height_up / block.y, 1);
+    kernel_primalu<<< grid, block>>>(px, py, u_,u,epsilon_u, tau,xisqr, WiT_BiT_DiT_qi, stride, width_up, height_up,N_imgs);
     cutilCheckMsg("execution failed\n");
 }
 

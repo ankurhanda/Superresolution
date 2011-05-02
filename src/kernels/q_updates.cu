@@ -15,7 +15,8 @@
 __global__ void kernel_q_SubtractDBWiu_fAdd_yAndReproject(float *result, int resultStride,
                                                           float *d_DBWiu,int DBWiuStride,
                                                           float *d_fi,   int imgStride,
-                                                          float sigma_q,float xisqr)
+                                                          float sigma_q,float xisqr,float epsilon_d,
+                                                          int width_down, int height_down)
 {
 
 
@@ -26,13 +27,13 @@ __global__ void kernel_q_SubtractDBWiu_fAdd_yAndReproject(float *result, int res
     unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
 
     // write output vertex
-    if ( y*resultStride + x < result_size)
+    if ( y*resultStride + x < width_down*height_down)
     {
 
        float result_val = result[y*resultStride+x] + sigma_q*xisqr*(d_DBWiu[y*DBWiuStride+x]-d_fi[y*imgStride+x]);
-       result_val = result_val/(1 + sigma*epsilon_d/xisqr);
+       result_val = result_val/(1 + sigma_q*epsilon_d/xisqr);
 
-       result_val = max(-1.0f, min(1.0f, result_val)); // clamped reprojection
+       result_val = max(-xisqr*1.0f, min(xisqr, result_val)); // clamped reprojection
 
        result[y*resultStride+x] = result_val;
     }
@@ -43,14 +44,15 @@ __global__ void kernel_q_SubtractDBWiu_fAdd_yAndReproject(float *result, int res
 extern "C" void launch_kernel_q_SubtractDBWiu_fAdd_yAndReproject(float *result, int resultStride,
                                                                  float *d_DBWiu,int DBWiuStride,
                                                                  float *d_fi,   int imgStride,
-                                                                 float sigma_q,float xisqr)
+                                                                 float sigma_q,float xisqr,float epsilon_d,
+                                                                 int width_down, int height_down)
 {
     dim3 block(8, 8, 1);
-    dim3 grid(mesh_width / block.x, mesh_height / block.y, 1);
+    dim3 grid(width_down / block.x, height_down / block.y, 1);
     kernel_q_SubtractDBWiu_fAdd_yAndReproject<<< grid, block>>>(result, resultStride,
                                                                 d_DBWiu, DBWiuStride,
                                                                 d_fi, imgStride,
-                                                                sigma_q, xisqr);//N_imgs, q, DBWu_, epsilon_d, sigma, f, xisqr, stride);
+                                                                sigma_q, xisqr, epsilon_d, width_down, height_down);//N_imgs, q, DBWu_, epsilon_d, sigma, f, xisqr, stride);
     cutilCheckMsg("execution failed\n");
 }
 

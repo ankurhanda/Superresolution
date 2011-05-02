@@ -19069,30 +19069,120 @@ printf(" -> %s NVIDIA Display Driver.\n", sDriverReq);
 # 29
 } 
 # 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
-void kernel_Mult_Wi_u(float *u, float *horizontal_flow, float *vertical_flow, int imgNo, unsigned 
+void kernel_Mult_Wi_u(float *out, int outStride, float *d_u_, int u_Stride, float *horizontal_flow, float *vertical_flow, int velStride, int 
 # 16
-stride, unsigned mesh_width, unsigned mesh_height) ;
+imgNo, int width, int height) ;
 #if 0
 # 17
 { 
+# 20
+unsigned x = (((blockIdx.x) * (blockDim.x)) + (threadIdx.x)); 
+# 21
+unsigned y = (((blockIdx.y) * (blockDim.y)) + (threadIdx.y)); 
+# 23
+float x_ = (x); 
+# 24
+float y_ = (y); 
+# 26
+x_ = (((width - 1) < (((0.0F) > (x_ + (horizontal_flow[(y * velStride) + x]))) ? (0.0F) : (x_ + (horizontal_flow[(y * velStride) + x])))) ? (width - 1) : (((0.0F) > (x_ + (horizontal_flow[(y * velStride) + x]))) ? (0.0F) : (x_ + (horizontal_flow[(y * velStride) + x])))); 
+# 27
+y_ = (((height - 1) < (((0.0F) > (y_ + (vertical_flow[(y * velStride) + x]))) ? (0.0F) : (y_ + (vertical_flow[(y * velStride) + x])))) ? (height - 1) : (((0.0F) > (y_ + (vertical_flow[(y * velStride) + x]))) ? (0.0F) : (y_ + (vertical_flow[(y * velStride) + x])))); 
+# 29
+int flr_x = (floor(x_)); 
+# 30
+int flr_y = (floor(y_)); 
+# 32
+float x_ratio = (x_ - flr_x); 
+# 33
+float y_ratio = (y_ - flr_y); 
+# 35
+float val = ((((1) - x_ratio) * ((1) - y_ratio)) * (d_u_[(flr_y * u_Stride) + flr_x])); 
+# 37
+if ((flr_x + 1) < width) { 
+# 38
+val += ((x_ratio * ((1) - y_ratio)) * (d_u_[(flr_y * u_Stride) + (flr_x + 1)])); }  
+# 40
+if ((flr_y + 1) < height) 
 # 41
+{ 
+# 42
+val += ((((1) - x_ratio) * y_ratio) * (d_u_[((flr_y + 1) * u_Stride) + flr_x])); 
+# 44
+if ((flr_x + 1) < width) { 
+# 45
+val += ((x_ratio * y_ratio) * (d_u_[((flr_y + 1) * u_Stride) + (flr_x + 1)])); }  
+# 46
+}  
+# 48
+(out[(y * outStride) + x]) = val; 
+# 49
 } 
 #endif
-# 46 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
-extern "C" void launch_kernel_Mult_Wi_u(float *u, float *horizontal_flow, float *vertical_flow, int imgNo, unsigned 
-# 47
-stride, unsigned mesh_width, unsigned mesh_height) 
-# 48
+# 54 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+extern "C" void launch_kernel_Mult_Wi_u(float *out, int outStride, float *d_u_, int u_Stride, float *horizontal_flow, float *vertical_flow, int velStride, int 
+# 55
+imgNo, int width, int height) 
+# 56
 { 
-# 50
+# 58
 dim3 block(8, 8, 1); 
-# 51
-dim3 grid(mesh_width / (block.x), mesh_height / (block.y), 1); 
-# 52
-cudaConfigureCall(grid, block) ? ((void)0) : kernel_Mult_Wi_u(u, horizontal_flow, vertical_flow, imgNo, stride, mesh_width, mesh_height); 
-# 53
-__cutilGetLastError("execution failed\n", "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu", 53); 
-# 54
+# 59
+dim3 grid(width / (block.x), height / (block.y), 1); 
+# 60
+cudaConfigureCall(grid, block) ? ((void)0) : kernel_Mult_Wi_u(out, outStride, d_u_, u_Stride, horizontal_flow, vertical_flow, velStride, imgNo, width, height); 
+# 61
+__cutilGetLastError("execution failed\n", "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu", 61); 
+# 62
+} 
+# 65
+void kernel_blur(float *out, int outStride, float *in, int inStride, float *blur_kernel, int blurWidth, int width, int height) ;
+#if 0
+# 66
+{ 
+# 68
+unsigned x = (((blockIdx.x) * (blockDim.x)) + (threadIdx.x)); 
+# 69
+unsigned y = (((blockIdx.y) * (blockDim.y)) + (threadIdx.y)); 
+# 71
+float val = (0); 
+# 75
+for (int i = ((-blurWidth) / 2); i <= (blurWidth / 2); i++) 
+# 76
+{ 
+# 77
+for (int j = ((-blurWidth) / 2); j <= (blurWidth / 2); j++) 
+# 78
+{ 
+# 79
+if (((y + i) < height) && ((x + j) < width)) 
+# 80
+{ 
+# 81
+val += ((blur_kernel[(i * blurWidth) + j]) * (in[((y + i) * inStride) + (x + j)])); 
+# 82
+}  
+# 83
+}  
+# 84
+}  
+# 86
+(out[(y * outStride) + x]) = val; 
+# 88
+} 
+#endif
+# 90 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+extern "C" void launch_kernel_blur(float *out, int outStride, float *in, int inStride, float *blur_kernel, int blurWidth, int width, int height) 
+# 91
+{ 
+# 93
+dim3 block(8, 8, 1); 
+# 94
+dim3 grid(width / (block.x), height / (block.y), 1); 
+# 95
+cudaConfigureCall(grid, block) ? ((void)0) : kernel_blur(out, outStride, in, inStride, blur_kernel, blurWidth, width, height); 
+# 96
+__cutilGetLastError("execution failed\n", "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu", 96); 
+# 97
 } 
 # 1 "aux_updates.cudafe1.stub.c"
 #include "aux_updates.cudafe1.stub.c"

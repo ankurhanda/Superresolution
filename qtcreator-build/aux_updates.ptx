@@ -5,7 +5,7 @@
 	// nvopencc 4.0 built on 2011-03-20
 
 	//-----------------------------------------------------------
-	// Compiling aux_updates.cpp3.i (/tmp/ccBI#.2g8jDq)
+	// Compiling aux_updates.cpp3.i (/tmp/ccBI#.jHyasW)
 	//-----------------------------------------------------------
 
 	//-----------------------------------------------------------
@@ -47,19 +47,278 @@
 	.file	28	"/usr/local/cuda/include/math_functions_dbl_ptx3.h"
 
 
-	.entry _Z16kernel_Mult_Wi_uPfS_S_ijjj (
-		.param .u64 __cudaparm__Z16kernel_Mult_Wi_uPfS_S_ijjj_u,
-		.param .u64 __cudaparm__Z16kernel_Mult_Wi_uPfS_S_ijjj_horizontal_flow,
-		.param .u64 __cudaparm__Z16kernel_Mult_Wi_uPfS_S_ijjj_vertical_flow,
-		.param .s32 __cudaparm__Z16kernel_Mult_Wi_uPfS_S_ijjj_imgNo,
-		.param .u32 __cudaparm__Z16kernel_Mult_Wi_uPfS_S_ijjj_stride,
-		.param .u32 __cudaparm__Z16kernel_Mult_Wi_uPfS_S_ijjj_mesh_width,
-		.param .u32 __cudaparm__Z16kernel_Mult_Wi_uPfS_S_ijjj_mesh_height)
+	.entry _Z16kernel_Mult_Wi_uPfiS_iS_S_iiii (
+		.param .u64 __cudaparm__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii_out,
+		.param .s32 __cudaparm__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii_outStride,
+		.param .u64 __cudaparm__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii_d_u_,
+		.param .s32 __cudaparm__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii_u_Stride,
+		.param .u64 __cudaparm__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii_horizontal_flow,
+		.param .u64 __cudaparm__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii_vertical_flow,
+		.param .s32 __cudaparm__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii_velStride,
+		.param .s32 __cudaparm__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii_imgNo,
+		.param .s32 __cudaparm__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii_width,
+		.param .s32 __cudaparm__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii_height)
 	{
+	.reg .u32 %r<39>;
+	.reg .u64 %rd<19>;
+	.reg .f32 %f<37>;
+	.reg .pred %p<8>;
 	.loc	16	16	0
-$LDWbegin__Z16kernel_Mult_Wi_uPfS_S_ijjj:
-	.loc	16	41	0
+$LDWbegin__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii:
+	mov.u32 	%r1, %ctaid.x;
+	mov.u32 	%r2, %ntid.x;
+	mul.lo.u32 	%r3, %r1, %r2;
+	mov.u32 	%r4, %ctaid.y;
+	mov.u32 	%r5, %ntid.y;
+	mul.lo.u32 	%r6, %r4, %r5;
+	ld.param.s32 	%r7, [__cudaparm__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii_width];
+	sub.s32 	%r8, %r7, 1;
+	mov.u32 	%r9, %tid.x;
+	add.u32 	%r10, %r9, %r3;
+	mov.u32 	%r11, %tid.y;
+	add.u32 	%r12, %r11, %r6;
+	cvt.rn.f32.s32 	%f1, %r8;
+	cvt.rn.f32.u32 	%f2, %r10;
+	ld.param.s32 	%r13, [__cudaparm__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii_velStride];
+	mul.lo.u32 	%r14, %r13, %r12;
+	add.u32 	%r15, %r10, %r14;
+	cvt.u64.u32 	%rd1, %r15;
+	mul.wide.u32 	%rd2, %r15, 4;
+	ld.param.u64 	%rd3, [__cudaparm__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii_horizontal_flow];
+	add.u64 	%rd4, %rd3, %rd2;
+	ld.global.f32 	%f3, [%rd4+0];
+	add.ftz.f32 	%f4, %f2, %f3;
+	mov.f32 	%f5, 0f00000000;     	// 0
+	setp.lt.ftz.f32 	%p1, %f4, %f5;
+	@!%p1 bra 	$Lt_0_7426;
+	.loc	16	26	0
+	mov.f32 	%f6, 0f00000000;     	// 0
+	set.lt.ftz.u32.f32 	%r16, %f1, %f6;
+	neg.s32 	%r17, %r16;
+	bra.uni 	$Lt_0_7170;
+$Lt_0_7426:
+	set.lt.ftz.u32.f32 	%r18, %f1, %f4;
+	neg.s32 	%r17, %r18;
+$Lt_0_7170:
+	mov.u32 	%r19, 0;
+	setp.eq.s32 	%p2, %r17, %r19;
+	@%p2 bra 	$Lt_0_7938;
+	mov.f32 	%f7, %f1;
+	bra.uni 	$Lt_0_7682;
+$Lt_0_7938:
+	@!%p1 bra 	$Lt_0_8450;
+	mov.f32 	%f8, 0f00000000;     	// 0
+	bra.uni 	$Lt_0_8194;
+$Lt_0_8450:
+	mov.f32 	%f8, %f4;
+$Lt_0_8194:
+	mov.f32 	%f7, %f8;
+$Lt_0_7682:
+	ld.param.s32 	%r20, [__cudaparm__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii_height];
+	sub.s32 	%r21, %r20, 1;
+	cvt.rn.f32.s32 	%f9, %r21;
+	cvt.rn.f32.u32 	%f10, %r12;
+	ld.param.u64 	%rd5, [__cudaparm__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii_vertical_flow];
+	add.u64 	%rd6, %rd5, %rd2;
+	ld.global.f32 	%f11, [%rd6+0];
+	add.ftz.f32 	%f12, %f10, %f11;
+	mov.f32 	%f13, 0f00000000;    	// 0
+	setp.lt.ftz.f32 	%p3, %f12, %f13;
+	@!%p3 bra 	$Lt_0_8962;
+	.loc	16	27	0
+	mov.f32 	%f14, 0f00000000;    	// 0
+	set.lt.ftz.u32.f32 	%r22, %f9, %f14;
+	neg.s32 	%r23, %r22;
+	bra.uni 	$Lt_0_8706;
+$Lt_0_8962:
+	set.lt.ftz.u32.f32 	%r24, %f9, %f12;
+	neg.s32 	%r23, %r24;
+$Lt_0_8706:
+	mov.u32 	%r25, 0;
+	setp.eq.s32 	%p4, %r23, %r25;
+	@%p4 bra 	$Lt_0_9474;
+	mov.f32 	%f15, %f9;
+	bra.uni 	$Lt_0_9218;
+$Lt_0_9474:
+	@!%p3 bra 	$Lt_0_9986;
+	mov.f32 	%f16, 0f00000000;    	// 0
+	bra.uni 	$Lt_0_9730;
+$Lt_0_9986:
+	mov.f32 	%f16, %f12;
+$Lt_0_9730:
+	mov.f32 	%f15, %f16;
+$Lt_0_9218:
+	.loc	16	35	0
+	cvt.rmi.ftz.f32.f32 	%f17, %f7;
+	cvt.rmi.ftz.f32.f32 	%f18, %f15;
+	cvt.rzi.ftz.s32.f32 	%r26, %f17;
+	cvt.rzi.ftz.s32.f32 	%r27, %f18;
+	cvt.rn.f32.s32 	%f19, %r26;
+	ld.param.s32 	%r28, [__cudaparm__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii_u_Stride];
+	cvt.rn.f32.s32 	%f20, %r27;
+	sub.ftz.f32 	%f21, %f7, %f19;
+	sub.ftz.f32 	%f22, %f15, %f20;
+	mov.f32 	%f23, 0f3f800000;    	// 1
+	sub.ftz.f32 	%f24, %f23, %f21;
+	mov.f32 	%f25, 0f3f800000;    	// 1
+	sub.ftz.f32 	%f26, %f25, %f22;
+	ld.param.u64 	%rd7, [__cudaparm__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii_d_u_];
+	mul.lo.s32 	%r29, %r27, %r28;
+	add.s32 	%r30, %r26, %r29;
+	cvt.s64.s32 	%rd8, %r30;
+	mul.wide.s32 	%rd9, %r30, 4;
+	add.u64 	%rd10, %rd7, %rd9;
+	ld.global.f32 	%f27, [%rd10+0];
+	mul.ftz.f32 	%f28, %f24, %f26;
+	mul.ftz.f32 	%f29, %f27, %f28;
+	add.s32 	%r31, %r26, 1;
+	setp.lt.s32 	%p5, %r31, %r7;
+	@!%p5 bra 	$Lt_0_10242;
+	.loc	16	38	0
+	ld.global.f32 	%f30, [%rd10+4];
+	mul.ftz.f32 	%f31, %f21, %f26;
+	fma.rn.ftz.f32 	%f29, %f30, %f31, %f29;
+$Lt_0_10242:
+	add.s32 	%r32, %r27, 1;
+	setp.ge.s32 	%p6, %r32, %r20;
+	@%p6 bra 	$Lt_0_10754;
+	.loc	16	42	0
+	mul.lo.s32 	%r33, %r32, %r28;
+	add.s32 	%r34, %r26, %r33;
+	cvt.s64.s32 	%rd11, %r34;
+	mul.wide.s32 	%rd12, %r34, 4;
+	add.u64 	%rd13, %rd7, %rd12;
+	ld.global.f32 	%f32, [%rd13+0];
+	mul.ftz.f32 	%f33, %f22, %f24;
+	fma.rn.ftz.f32 	%f29, %f32, %f33, %f29;
+	@!%p5 bra 	$Lt_0_11266;
+	.loc	16	45	0
+	ld.global.f32 	%f34, [%rd13+4];
+	mul.ftz.f32 	%f35, %f21, %f22;
+	fma.rn.ftz.f32 	%f29, %f34, %f35, %f29;
+$Lt_0_11266:
+$Lt_0_10754:
+	.loc	16	48	0
+	ld.param.u64 	%rd14, [__cudaparm__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii_out];
+	ld.param.s32 	%r35, [__cudaparm__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii_outStride];
+	mul.lo.u32 	%r36, %r35, %r12;
+	add.u32 	%r37, %r10, %r36;
+	cvt.u64.u32 	%rd15, %r37;
+	mul.wide.u32 	%rd16, %r37, 4;
+	add.u64 	%rd17, %rd14, %rd16;
+	st.global.f32 	[%rd17+0], %f29;
+	.loc	16	49	0
 	exit;
-$LDWend__Z16kernel_Mult_Wi_uPfS_S_ijjj:
-	} // _Z16kernel_Mult_Wi_uPfS_S_ijjj
+$LDWend__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii:
+	} // _Z16kernel_Mult_Wi_uPfiS_iS_S_iiii
+
+	.entry _Z11kernel_blurPfiS_iS_iii (
+		.param .u64 __cudaparm__Z11kernel_blurPfiS_iS_iii_out,
+		.param .s32 __cudaparm__Z11kernel_blurPfiS_iS_iii_outStride,
+		.param .u64 __cudaparm__Z11kernel_blurPfiS_iS_iii_in,
+		.param .s32 __cudaparm__Z11kernel_blurPfiS_iS_iii_inStride,
+		.param .u64 __cudaparm__Z11kernel_blurPfiS_iS_iii_blur_kernel,
+		.param .s32 __cudaparm__Z11kernel_blurPfiS_iS_iii_blurWidth,
+		.param .s32 __cudaparm__Z11kernel_blurPfiS_iS_iii_width,
+		.param .s32 __cudaparm__Z11kernel_blurPfiS_iS_iii_height)
+	{
+	.reg .u32 %r<50>;
+	.reg .u64 %rd<14>;
+	.reg .f32 %f<5>;
+	.reg .pred %p<7>;
+	.loc	16	65	0
+$LDWbegin__Z11kernel_blurPfiS_iS_iii:
+	.loc	16	75	0
+	ld.param.s32 	%r1, [__cudaparm__Z11kernel_blurPfiS_iS_iii_blurWidth];
+	neg.s32 	%r2, %r1;
+	shr.s32 	%r3, %r2, 31;
+	mov.s32 	%r4, 1;
+	and.b32 	%r5, %r3, %r4;
+	add.s32 	%r6, %r5, %r2;
+	shr.s32 	%r7, %r6, 1;
+	mov.s32 	%r8, %r7;
+	shr.s32 	%r9, %r1, 31;
+	mov.s32 	%r10, 1;
+	and.b32 	%r11, %r9, %r10;
+	add.s32 	%r12, %r11, %r1;
+	shr.s32 	%r13, %r12, 1;
+	mov.u32 	%r14, %ctaid.x;
+	mov.u32 	%r15, %ntid.x;
+	mul.lo.u32 	%r16, %r14, %r15;
+	mov.u32 	%r17, %ctaid.y;
+	mov.u32 	%r18, %ntid.y;
+	mul.lo.u32 	%r19, %r17, %r18;
+	mov.u32 	%r20, %tid.x;
+	add.u32 	%r21, %r20, %r16;
+	mov.u32 	%r22, %tid.y;
+	add.u32 	%r23, %r22, %r19;
+	setp.lt.s32 	%p1, %r13, %r7;
+	@%p1 bra 	$Lt_1_5890;
+	sub.s32 	%r24, %r13, %r7;
+	add.s32 	%r25, %r24, 1;
+	mov.s32 	%r26, %r25;
+	add.s32 	%r27, %r13, 1;
+	ld.param.s32 	%r28, [__cudaparm__Z11kernel_blurPfiS_iS_iii_width];
+	ld.param.s32 	%r29, [__cudaparm__Z11kernel_blurPfiS_iS_iii_height];
+	mov.f32 	%f1, 0f00000000;     	// 0
+	mov.s32 	%r30, %r26;
+$Lt_1_3842:
+ //<loop> Loop body line 75, nesting depth: 1, estimated iterations: unknown
+	.loc	16	77	0
+	mov.s32 	%r31, %r7;
+	mov.s32 	%r32, %r25;
+	add.u32 	%r33, %r8, %r23;
+	setp.gt.u32 	%p2, %r29, %r33;
+	selp.s32 	%r34, 1, 0, %p2;
+	mov.s32 	%r35, %r32;
+$Lt_1_4610:
+ //<loop> Loop body line 77, nesting depth: 2, estimated iterations: unknown
+	add.u32 	%r36, %r31, %r21;
+	set.gt.u32.u32 	%r37, %r28, %r36;
+	neg.s32 	%r38, %r37;
+	and.b32 	%r39, %r34, %r38;
+	mov.u32 	%r40, 0;
+	setp.eq.s32 	%p3, %r39, %r40;
+	@%p3 bra 	$Lt_1_4866;
+	.loc	16	81	0
+	ld.param.u64 	%rd1, [__cudaparm__Z11kernel_blurPfiS_iS_iii_in];
+	ld.param.s32 	%r41, [__cudaparm__Z11kernel_blurPfiS_iS_iii_inStride];
+	mul.lo.u32 	%r42, %r41, %r33;
+	add.u32 	%r43, %r36, %r42;
+	cvt.u64.u32 	%rd2, %r43;
+	mul.wide.u32 	%rd3, %r43, 4;
+	add.u64 	%rd4, %rd1, %rd3;
+	ld.global.f32 	%f2, [%rd4+0];
+	ld.param.u64 	%rd5, [__cudaparm__Z11kernel_blurPfiS_iS_iii_blur_kernel];
+	mul.lo.s32 	%r44, %r8, %r1;
+	add.s32 	%r45, %r31, %r44;
+	cvt.s64.s32 	%rd6, %r45;
+	mul.wide.s32 	%rd7, %r45, 4;
+	add.u64 	%rd8, %rd5, %rd7;
+	ldu.global.f32 	%f3, [%rd8+0];
+	fma.rn.ftz.f32 	%f1, %f2, %f3, %f1;
+$Lt_1_4866:
+	add.s32 	%r31, %r31, 1;
+	setp.ne.s32 	%p4, %r27, %r31;
+	@%p4 bra 	$Lt_1_4610;
+	add.s32 	%r8, %r8, 1;
+	setp.ne.s32 	%p5, %r27, %r8;
+	@%p5 bra 	$Lt_1_3842;
+	bra.uni 	$Lt_1_3330;
+$Lt_1_5890:
+	mov.f32 	%f1, 0f00000000;     	// 0
+$Lt_1_3330:
+	.loc	16	86	0
+	ld.param.u64 	%rd9, [__cudaparm__Z11kernel_blurPfiS_iS_iii_out];
+	ld.param.s32 	%r46, [__cudaparm__Z11kernel_blurPfiS_iS_iii_outStride];
+	mul.lo.u32 	%r47, %r46, %r23;
+	add.u32 	%r48, %r21, %r47;
+	cvt.u64.u32 	%rd10, %r48;
+	mul.wide.u32 	%rd11, %r48, 4;
+	add.u64 	%rd12, %rd9, %rd11;
+	st.global.f32 	[%rd12+0], %f1;
+	.loc	16	88	0
+	exit;
+$LDWend__Z11kernel_blurPfiS_iS_iii:
+	} // _Z11kernel_blurPfiS_iS_iii
 

@@ -1,0 +1,253 @@
+	.version 2.3
+	.target sm_20
+	.address_size 64
+	// compiled with /usr/local/cuda/open64/lib//be
+	// nvopencc 4.0 built on 2011-03-20
+
+	//-----------------------------------------------------------
+	// Compiling u_updates.cpp3.i (/tmp/ccBI#.YElPJh)
+	//-----------------------------------------------------------
+
+	//-----------------------------------------------------------
+	// Options:
+	//-----------------------------------------------------------
+	//  Target:ptx, ISA:sm_20, Endian:little, Pointer Size:64
+	//  -O3	(Optimization level)
+	//  -g0	(Debug level)
+	//  -m2	(Report advisories)
+	//-----------------------------------------------------------
+
+	.file	1	"<command-line>"
+	.file	2	"u_updates.cudafe2.gpu"
+	.file	3	"/usr/lib/gcc/x86_64-linux-gnu/4.4.5/include/stddef.h"
+	.file	4	"/usr/local/cuda/include/crt/device_runtime.h"
+	.file	5	"/usr/local/cuda/include/host_defines.h"
+	.file	6	"/usr/local/cuda/include/builtin_types.h"
+	.file	7	"/usr/local/cuda/include/device_types.h"
+	.file	8	"/usr/local/cuda/include/driver_types.h"
+	.file	9	"/usr/local/cuda/include/surface_types.h"
+	.file	10	"/usr/local/cuda/include/texture_types.h"
+	.file	11	"/usr/local/cuda/include/vector_types.h"
+	.file	12	"/usr/local/cuda/include/device_launch_parameters.h"
+	.file	13	"/usr/local/cuda/include/crt/storage_class.h"
+	.file	14	"/usr/include/bits/types.h"
+	.file	15	"/usr/include/time.h"
+	.file	16	"/home/ankur/workspace/code/Superresolution/./src/kernels/u_updates.cu"
+	.file	17	"/usr/local/cuda/include/common_functions.h"
+	.file	18	"/usr/local/cuda/include/math_functions.h"
+	.file	19	"/usr/local/cuda/include/math_constants.h"
+	.file	20	"/usr/local/cuda/include/device_functions.h"
+	.file	21	"/usr/local/cuda/include/sm_11_atomic_functions.h"
+	.file	22	"/usr/local/cuda/include/sm_12_atomic_functions.h"
+	.file	23	"/usr/local/cuda/include/sm_13_double_functions.h"
+	.file	24	"/usr/local/cuda/include/sm_20_atomic_functions.h"
+	.file	25	"/usr/local/cuda/include/sm_20_intrinsics.h"
+	.file	26	"/usr/local/cuda/include/surface_functions.h"
+	.file	27	"/usr/local/cuda/include/texture_fetch_functions.h"
+	.file	28	"/usr/local/cuda/include/math_functions_dbl_ptx3.h"
+
+
+	.entry _Z19kernel_derivative_uPfS_S_jjj (
+		.param .u64 __cudaparm__Z19kernel_derivative_uPfS_S_jjj_ux_,
+		.param .u64 __cudaparm__Z19kernel_derivative_uPfS_S_jjj_uy_,
+		.param .u64 __cudaparm__Z19kernel_derivative_uPfS_S_jjj_u_,
+		.param .u32 __cudaparm__Z19kernel_derivative_uPfS_S_jjj_stride,
+		.param .u32 __cudaparm__Z19kernel_derivative_uPfS_S_jjj_width,
+		.param .u32 __cudaparm__Z19kernel_derivative_uPfS_S_jjj_height)
+	{
+	.reg .u32 %r<24>;
+	.reg .u64 %rd<17>;
+	.reg .f32 %f<8>;
+	.reg .pred %p<4>;
+	.loc	16	15	0
+$LDWbegin__Z19kernel_derivative_uPfS_S_jjj:
+	mov.u32 	%r1, %ctaid.x;
+	mov.u32 	%r2, %ntid.x;
+	mul.lo.u32 	%r3, %r1, %r2;
+	mov.u32 	%r4, %ctaid.y;
+	mov.u32 	%r5, %ntid.y;
+	mul.lo.u32 	%r6, %r4, %r5;
+	mov.u32 	%r7, %tid.x;
+	add.u32 	%r8, %r7, %r3;
+	mov.u32 	%r9, %tid.y;
+	add.u32 	%r10, %r9, %r6;
+	ld.param.u32 	%r11, [__cudaparm__Z19kernel_derivative_uPfS_S_jjj_width];
+	add.u32 	%r12, %r8, 1;
+	setp.le.u32 	%p1, %r11, %r12;
+	@%p1 bra 	$Lt_0_1794;
+	.loc	16	22	0
+	ld.param.u32 	%r13, [__cudaparm__Z19kernel_derivative_uPfS_S_jjj_stride];
+	mul.lo.u32 	%r14, %r13, %r10;
+	add.u32 	%r15, %r8, %r14;
+	cvt.u64.u32 	%rd1, %r15;
+	mul.wide.u32 	%rd2, %r15, 4;
+	ld.param.u64 	%rd3, [__cudaparm__Z19kernel_derivative_uPfS_S_jjj_u_];
+	add.u64 	%rd4, %rd3, %rd2;
+	ld.global.f32 	%f1, [%rd4+4];
+	ld.global.f32 	%f2, [%rd4+0];
+	sub.ftz.f32 	%f3, %f1, %f2;
+	ld.param.u64 	%rd5, [__cudaparm__Z19kernel_derivative_uPfS_S_jjj_ux_];
+	add.u64 	%rd6, %rd5, %rd2;
+	st.global.f32 	[%rd6+0], %f3;
+$Lt_0_1794:
+	add.u32 	%r16, %r10, 1;
+	ld.param.u32 	%r17, [__cudaparm__Z19kernel_derivative_uPfS_S_jjj_height];
+	setp.le.u32 	%p2, %r17, %r16;
+	@%p2 bra 	$Lt_0_2306;
+	.loc	16	27	0
+	ld.param.u32 	%r18, [__cudaparm__Z19kernel_derivative_uPfS_S_jjj_stride];
+	mul.lo.u32 	%r19, %r10, %r18;
+	add.u32 	%r20, %r8, %r19;
+	cvt.u64.u32 	%rd7, %r20;
+	mul.wide.u32 	%rd8, %r20, 4;
+	ld.param.u64 	%rd9, [__cudaparm__Z19kernel_derivative_uPfS_S_jjj_u_];
+	mul.lo.u32 	%r21, %r16, %r18;
+	add.u32 	%r22, %r8, %r21;
+	cvt.u64.u32 	%rd10, %r22;
+	mul.wide.u32 	%rd11, %r22, 4;
+	add.u64 	%rd12, %rd9, %rd11;
+	ld.global.f32 	%f4, [%rd12+0];
+	add.u64 	%rd13, %rd8, %rd9;
+	ld.global.f32 	%f5, [%rd13+0];
+	sub.ftz.f32 	%f6, %f4, %f5;
+	ld.param.u64 	%rd14, [__cudaparm__Z19kernel_derivative_uPfS_S_jjj_uy_];
+	add.u64 	%rd15, %rd14, %rd8;
+	st.global.f32 	[%rd15+0], %f6;
+$Lt_0_2306:
+	.loc	16	30	0
+	exit;
+$LDWend__Z19kernel_derivative_uPfS_S_jjj:
+	} // _Z19kernel_derivative_uPfS_S_jjj
+
+	.entry _Z14kernel_primaluPfS_S_S_fffS_jjji (
+		.param .u64 __cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_px,
+		.param .u64 __cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_py,
+		.param .u64 __cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_u_,
+		.param .u64 __cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_u,
+		.param .f32 __cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_epsilon_u,
+		.param .f32 __cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_tau,
+		.param .f32 __cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_xisqr,
+		.param .u64 __cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_WiT_BiT_DiT_qi,
+		.param .u32 __cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_stride,
+		.param .u32 __cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_width_up,
+		.param .u32 __cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_height_up,
+		.param .s32 __cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_N_imgs)
+	{
+	.reg .u32 %r<41>;
+	.reg .u64 %rd<19>;
+	.reg .f32 %f<20>;
+	.reg .pred %p<6>;
+	.loc	16	55	0
+$LDWbegin__Z14kernel_primaluPfS_S_S_fffS_jjji:
+	mov.u32 	%r1, %ctaid.x;
+	mov.u32 	%r2, %ntid.x;
+	mul.lo.u32 	%r3, %r1, %r2;
+	mov.u32 	%r4, %ctaid.y;
+	mov.u32 	%r5, %ntid.y;
+	mul.lo.u32 	%r6, %r4, %r5;
+	mov.u32 	%r7, %tid.x;
+	add.u32 	%r8, %r7, %r3;
+	mov.u32 	%r9, %tid.y;
+	add.u32 	%r10, %r9, %r6;
+	ld.param.u32 	%r11, [__cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_stride];
+	mul.lo.u32 	%r12, %r10, %r11;
+	add.u32 	%r13, %r8, %r12;
+	cvt.u64.u32 	%rd1, %r13;
+	mul.wide.u32 	%rd2, %r13, 4;
+	ld.param.u32 	%r14, [__cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_width_up];
+	set.lt.u32.u32 	%r15, %r8, %r14;
+	neg.s32 	%r16, %r15;
+	mov.u32 	%r17, 0;
+	set.ne.u32.u32 	%r18, %r8, %r17;
+	neg.s32 	%r19, %r18;
+	and.b32 	%r20, %r16, %r19;
+	mov.u32 	%r21, 0;
+	setp.eq.s32 	%p1, %r20, %r21;
+	@%p1 bra 	$Lt_1_3586;
+	.loc	16	69	0
+	ld.param.u64 	%rd3, [__cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_px];
+	add.u64 	%rd4, %rd3, %rd2;
+	ld.global.f32 	%f1, [%rd4+0];
+	ld.global.f32 	%f2, [%rd4+-4];
+	sub.ftz.f32 	%f3, %f1, %f2;
+	bra.uni 	$Lt_1_3330;
+$Lt_1_3586:
+	mov.f32 	%f3, 0f00000000;     	// 0
+$Lt_1_3330:
+	ld.param.u32 	%r22, [__cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_height_up];
+	set.lt.u32.u32 	%r23, %r10, %r22;
+	neg.s32 	%r24, %r23;
+	mov.u32 	%r25, 0;
+	set.ne.u32.u32 	%r26, %r10, %r25;
+	neg.s32 	%r27, %r26;
+	and.b32 	%r28, %r24, %r27;
+	mov.u32 	%r29, 0;
+	setp.eq.s32 	%p2, %r28, %r29;
+	@%p2 bra 	$Lt_1_4098;
+	.loc	16	71	0
+	ld.param.u64 	%rd5, [__cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_py];
+	add.u64 	%rd6, %rd2, %rd5;
+	ld.global.f32 	%f4, [%rd6+0];
+	sub.u32 	%r30, %r10, 1;
+	mul.lo.u32 	%r31, %r11, %r30;
+	add.u32 	%r32, %r8, %r31;
+	cvt.u64.u32 	%rd7, %r32;
+	mul.wide.u32 	%rd8, %r32, 4;
+	add.u64 	%rd9, %rd5, %rd8;
+	ld.global.f32 	%f5, [%rd9+0];
+	sub.ftz.f32 	%f6, %f4, %f5;
+	bra.uni 	$Lt_1_3842;
+$Lt_1_4098:
+	mov.f32 	%f6, 0f00000000;     	// 0
+$Lt_1_3842:
+	.loc	16	75	0
+	ld.param.u64 	%rd10, [__cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_u];
+	add.u64 	%rd11, %rd10, %rd2;
+	ld.global.f32 	%f7, [%rd11+0];
+	ld.param.s32 	%r33, [__cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_N_imgs];
+	mov.u32 	%r34, 0;
+	setp.le.s32 	%p3, %r33, %r34;
+	@%p3 bra 	$Lt_1_5378;
+	mov.s32 	%r35, %r33;
+	mul.lo.u32 	%r36, %r22, %r14;
+	mov.s32 	%r37, %r13;
+	ld.param.u64 	%rd12, [__cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_WiT_BiT_DiT_qi];
+	mov.s32 	%r38, 0;
+	mov.f32 	%f8, 0f00000000;     	// 0
+	mov.s32 	%r39, %r35;
+$Lt_1_4866:
+ //<loop> Loop body line 75, nesting depth: 1, estimated iterations: unknown
+	.loc	16	83	0
+	cvt.u64.u32 	%rd13, %r37;
+	mul.wide.u32 	%rd14, %r37, 4;
+	add.u64 	%rd15, %rd12, %rd14;
+	ld.global.f32 	%f9, [%rd15+0];
+	add.ftz.f32 	%f8, %f9, %f8;
+	add.s32 	%r38, %r38, 1;
+	add.u32 	%r37, %r36, %r37;
+	setp.ne.s32 	%p4, %r33, %r38;
+	@%p4 bra 	$Lt_1_4866;
+	bra.uni 	$Lt_1_4354;
+$Lt_1_5378:
+	mov.f32 	%f8, 0f00000000;     	// 0
+$Lt_1_4354:
+	.loc	16	87	0
+	add.ftz.f32 	%f10, %f6, %f3;
+	ld.param.f32 	%f11, [__cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_xisqr];
+	mul.ftz.f32 	%f12, %f11, %f8;
+	sub.ftz.f32 	%f13, %f12, %f10;
+	ld.param.f32 	%f14, [__cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_tau];
+	mul.ftz.f32 	%f15, %f14, %f13;
+	sub.ftz.f32 	%f16, %f7, %f15;
+	st.global.f32 	[%rd11+0], %f16;
+	.loc	16	89	0
+	add.ftz.f32 	%f17, %f16, %f16;
+	sub.ftz.f32 	%f18, %f17, %f7;
+	ld.param.u64 	%rd16, [__cudaparm__Z14kernel_primaluPfS_S_S_fffS_jjji_u_];
+	add.u64 	%rd17, %rd16, %rd2;
+	st.global.f32 	[%rd17+0], %f18;
+	.loc	16	91	0
+	exit;
+$LDWend__Z14kernel_primaluPfS_S_S_fffS_jjji:
+	} // _Z14kernel_primaluPfS_S_S_fffS_jjji
+

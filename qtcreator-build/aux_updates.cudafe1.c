@@ -440,7 +440,7 @@ enum _ZNSt9__is_byteIaEUt_E { _ZNSt9__is_byteIaE7__valueE = 1};
 # 391 "/usr/include/c++/4.4/bits/cpp_type_traits.h" 3
 enum _ZNSt9__is_byteIhEUt_E { _ZNSt9__is_byteIhE7__valueE = 1};
 # 134 "/usr/include/c++/4.4/bits/cpp_type_traits.h" 3
-enum _ZNSt12__is_integerIdEUt_E { _ZNSt12__is_integerIdE7__valueE};
+enum _ZNSt12__is_integerIdEUt_E { _ZNSt12__is_integerIdE7__valueE}; enum _ZNSt12__is_integerIfEUt_E { _ZNSt12__is_integerIfE7__valueE};
 # 211 "/usr/lib/gcc/x86_64-linux-gnu/4.4.5/include/stddef.h" 3
 typedef unsigned long size_t;
 #include "crt/host_runtime.h"
@@ -833,13 +833,15 @@ extern float erfinvf(float);
 extern double erfcinv(double);
 
 extern float erfcinvf(float);
-# 46 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
-extern void launch_kernel_Mult_Wi_u(float *, float *, float *, int, unsigned, unsigned, unsigned);
+# 54 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+extern void launch_kernel_Mult_Wi_u(float *, int, float *, int, float *, float *, int, int, int, int);
+# 90 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+extern void launch_kernel_blur(float *, int, float *, int, float *, int, int, int);
 extern int __cudaSetupArgSimple();
 extern int __cudaLaunch();
 extern int __cudaRegisterBinary();
 extern int __cudaRegisterEntry();
-static void __sti___19_aux_updates_cpp1_ii_25f4532c(void) __attribute__((__constructor__));
+static void __sti___19_aux_updates_cpp1_ii_08065f1e(void) __attribute__((__constructor__));
 # 167 "/usr/include/stdio.h" 3
 extern struct _IO_FILE *stderr;
 extern  __attribute__((__weak__)) /* COMDAT group: _ZTSSt9exception */ const char _ZTSSt9exception[13] __attribute__((visibility("default")));
@@ -852,23 +854,39 @@ extern  __attribute__((__weak__)) /* COMDAT group: _ZTSSt9bad_alloc */ const cha
 return __fprintf_chk(__stream, 1, __fmt, (__builtin_va_arg_pack()));
 
 }
-# 46 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
-void launch_kernel_Mult_Wi_u( float *u,  float *horizontal_flow,  float *vertical_flow,  int imgNo, 
-unsigned stride,  unsigned mesh_width,  unsigned mesh_height)
+# 54 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+void launch_kernel_Mult_Wi_u( float *out,  int outStride,  float *d_u_,  int u_Stride,  float *horizontal_flow,  float *vertical_flow,  int velStride, 
+int imgNo,  int width,  int height)
 {  unsigned __T20;
  unsigned __T21;
  const char *__T22;
  const char *__T23;
  cudaError_t __T24;
-# 50 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
- dim3 __cuda_local_var_42964_10_non_const_block;
- dim3 __cuda_local_var_42965_10_non_const_grid;
-# 50 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
-{ (__cuda_local_var_42964_10_non_const_block.x) = 8U; (__cuda_local_var_42964_10_non_const_block.y) = 8U; (__cuda_local_var_42964_10_non_const_block.z) = 1U; }
-{ __T20 = (mesh_width / (__cuda_local_var_42964_10_non_const_block.x)); __T21 = (mesh_height / (__cuda_local_var_42964_10_non_const_block.y)); { (__cuda_local_var_42965_10_non_const_grid.x) = __T20; (__cuda_local_var_42965_10_non_const_grid.y) = __T21; (__cuda_local_var_42965_10_non_const_grid.z) = 1U; } }
-(cudaConfigureCall(__cuda_local_var_42965_10_non_const_grid, __cuda_local_var_42964_10_non_const_block, 0UL, ((cudaStream_t)0LL))) ? ((void)0) : (__device_stub__Z16kernel_Mult_Wi_uPfS_S_ijjj(u, horizontal_flow, vertical_flow, imgNo, stride, mesh_width, mesh_height));
-{ __T22 = ((const char *)"execution failed\n"); __T23 = ((const char *)"/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"); { __T24 = (cudaGetLastError()); if (0 != ((int)__T24)) { fprintf(stderr, ((const char *)"%s(%i) : cutilCheckMsg() CUTIL CUDA error : %s : %s.\n"), __T23, 53, __T22, (cudaGetErrorString(__T24))); exit((-1)); } } } 
+# 58 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+ dim3 __cuda_local_var_42972_10_non_const_block;
+ dim3 __cuda_local_var_42973_10_non_const_grid;
+# 58 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+{ (__cuda_local_var_42972_10_non_const_block.x) = 8U; (__cuda_local_var_42972_10_non_const_block.y) = 8U; (__cuda_local_var_42972_10_non_const_block.z) = 1U; }
+{ __T20 = (((unsigned)width) / (__cuda_local_var_42972_10_non_const_block.x)); __T21 = (((unsigned)height) / (__cuda_local_var_42972_10_non_const_block.y)); { (__cuda_local_var_42973_10_non_const_grid.x) = __T20; (__cuda_local_var_42973_10_non_const_grid.y) = __T21; (__cuda_local_var_42973_10_non_const_grid.z) = 1U; } }
+(cudaConfigureCall(__cuda_local_var_42973_10_non_const_grid, __cuda_local_var_42972_10_non_const_block, 0UL, ((cudaStream_t)0LL))) ? ((void)0) : (__device_stub__Z16kernel_Mult_Wi_uPfiS_iS_S_iiii(out, outStride, d_u_, u_Stride, horizontal_flow, vertical_flow, velStride, imgNo, width, height));
+{ __T22 = ((const char *)"execution failed\n"); __T23 = ((const char *)"/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"); { __T24 = (cudaGetLastError()); if (0 != ((int)__T24)) { fprintf(stderr, ((const char *)"%s(%i) : cutilCheckMsg() CUTIL CUDA error : %s : %s.\n"), __T23, 61, __T22, (cudaGetErrorString(__T24))); exit((-1)); } } } 
 }
-static void __sti___19_aux_updates_cpp1_ii_25f4532c(void) {   }
+# 90 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+void launch_kernel_blur( float *out,  int outStride,  float *in,  int inStride,  float *blur_kernel,  int blurWidth,  int width,  int height)
+{  unsigned __T25;
+ unsigned __T26;
+ const char *__T27;
+ const char *__T28;
+ cudaError_t __T29;
+# 93 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+ dim3 __cuda_local_var_43007_10_non_const_block;
+ dim3 __cuda_local_var_43008_10_non_const_grid;
+# 93 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+{ (__cuda_local_var_43007_10_non_const_block.x) = 8U; (__cuda_local_var_43007_10_non_const_block.y) = 8U; (__cuda_local_var_43007_10_non_const_block.z) = 1U; }
+{ __T25 = (((unsigned)width) / (__cuda_local_var_43007_10_non_const_block.x)); __T26 = (((unsigned)height) / (__cuda_local_var_43007_10_non_const_block.y)); { (__cuda_local_var_43008_10_non_const_grid.x) = __T25; (__cuda_local_var_43008_10_non_const_grid.y) = __T26; (__cuda_local_var_43008_10_non_const_grid.z) = 1U; } }
+(cudaConfigureCall(__cuda_local_var_43008_10_non_const_grid, __cuda_local_var_43007_10_non_const_block, 0UL, ((cudaStream_t)0LL))) ? ((void)0) : (__device_stub__Z11kernel_blurPfiS_iS_iii(out, outStride, in, inStride, blur_kernel, blurWidth, width, height));
+{ __T27 = ((const char *)"execution failed\n"); __T28 = ((const char *)"/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"); { __T29 = (cudaGetLastError()); if (0 != ((int)__T29)) { fprintf(stderr, ((const char *)"%s(%i) : cutilCheckMsg() CUTIL CUDA error : %s : %s.\n"), __T28, 96, __T27, (cudaGetErrorString(__T29))); exit((-1)); } } } 
+}
+static void __sti___19_aux_updates_cpp1_ii_08065f1e(void) {   }
 
 #include "aux_updates.cudafe1.stub.c"

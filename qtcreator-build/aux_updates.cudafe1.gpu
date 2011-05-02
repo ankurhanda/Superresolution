@@ -1032,6 +1032,10 @@ _ZNSt9__is_byteIhE7__valueE = 1};
 enum _ZNSt12__is_integerIdEUt_E {
 # 134 "/usr/include/c++/4.4/bits/cpp_type_traits.h" 3
 _ZNSt12__is_integerIdE7__valueE};
+# 134 "/usr/include/c++/4.4/bits/cpp_type_traits.h" 3
+enum _ZNSt12__is_integerIfEUt_E {
+# 134 "/usr/include/c++/4.4/bits/cpp_type_traits.h" 3
+_ZNSt12__is_integerIfE7__valueE};
 # 211 "/usr/lib/gcc/x86_64-linux-gnu/4.4.5/include/stddef.h" 3
 typedef unsigned long size_t;
 #include "crt/device_runtime.h"
@@ -4190,7 +4194,9 @@ struct _Z7textureI7ushort4Li3EL19cudaTextureReadMode1EE { struct textureReferenc
 /*DEVICE_BUILTIN*/___device__(extern  __no_sc__) uint4 __utexfetch(__texture_type__, float4, int);
 #endif
 # 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
-__global__ __var_used__ extern void _Z16kernel_Mult_Wi_uPfS_S_ijjj(float *, float *, float *, int, unsigned, unsigned, unsigned);
+__global__ __var_used__ extern void _Z16kernel_Mult_Wi_uPfiS_iS_S_iiii(float *, int, float *, int, float *, float *, int, int, int, int);
+# 65 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__global__ __var_used__ extern void _Z11kernel_blurPfiS_iS_iii(float *, int, float *, int, float *, int, int, int);
 #include "common_functions.h"
 #if !defined(__CUDABE__)
 #endif
@@ -5535,23 +5541,150 @@ __global__ __var_used__ extern void _Z16kernel_Mult_Wi_uPfS_S_ijjj(float *, floa
 #if !defined(__CUDABE__)
 #endif
 # 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
-__global__ __var_used__ void _Z16kernel_Mult_Wi_uPfS_S_ijjj(
+__global__ __var_used__ void _Z16kernel_Mult_Wi_uPfiS_iS_S_iiii(
 # 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
-float *u, 
+float *out, 
+# 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+int outStride, 
+# 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+float *d_u_, 
+# 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+int u_Stride, 
 # 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
 float *horizontal_flow, 
 # 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
 float *vertical_flow, 
 # 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+int velStride, 
+# 16 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
 int imgNo, 
 # 16 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
-unsigned stride, 
+int width, 
 # 16 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
-unsigned mesh_width, 
-# 16 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
-unsigned mesh_height){
+int height){
 # 17 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
 {
-# 17 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+# 20 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+ unsigned __cuda_local_var_42934_18_non_const_x;
+# 21 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+ unsigned __cuda_local_var_42935_18_non_const_y;
+# 23 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+ float __cuda_local_var_42937_11_non_const_x_;
+# 24 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+ float __cuda_local_var_42938_11_non_const_y_;
+# 29 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+ int __cuda_local_var_42943_9_non_const_flr_x;
+# 30 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+ int __cuda_local_var_42944_9_non_const_flr_y;
+# 32 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+ float __cuda_local_var_42946_11_non_const_x_ratio;
+# 33 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+ float __cuda_local_var_42947_11_non_const_y_ratio;
+# 35 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+ float __cuda_local_var_42949_11_non_const_val;
+# 20 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__cuda_local_var_42934_18_non_const_x = (((blockIdx.x) * (blockDim.x)) + (threadIdx.x));
+# 21 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__cuda_local_var_42935_18_non_const_y = (((blockIdx.y) * (blockDim.y)) + (threadIdx.y));
+# 23 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__cuda_local_var_42937_11_non_const_x_ = ((float)__cuda_local_var_42934_18_non_const_x);
+# 24 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__cuda_local_var_42938_11_non_const_y_ = ((float)__cuda_local_var_42935_18_non_const_y);
+# 26 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__cuda_local_var_42937_11_non_const_x_ = ((((float)(width - 1)) < (((0.0F) > (__cuda_local_var_42937_11_non_const_x_ + (horizontal_flow[((__cuda_local_var_42935_18_non_const_y * ((unsigned)velStride)) + __cuda_local_var_42934_18_non_const_x)]))) ? (0.0F) : (__cuda_local_var_42937_11_non_const_x_ + (horizontal_flow[((__cuda_local_var_42935_18_non_const_y * ((unsigned)velStride)) + __cuda_local_var_42934_18_non_const_x)])))) ? ((float)(width - 1)) : (((0.0F) > (__cuda_local_var_42937_11_non_const_x_ + (horizontal_flow[((__cuda_local_var_42935_18_non_const_y * ((unsigned)velStride)) + __cuda_local_var_42934_18_non_const_x)]))) ? (0.0F) : (__cuda_local_var_42937_11_non_const_x_ + (horizontal_flow[((__cuda_local_var_42935_18_non_const_y * ((unsigned)velStride)) + __cuda_local_var_42934_18_non_const_x)]))));
+# 27 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__cuda_local_var_42938_11_non_const_y_ = ((((float)(height - 1)) < (((0.0F) > (__cuda_local_var_42938_11_non_const_y_ + (vertical_flow[((__cuda_local_var_42935_18_non_const_y * ((unsigned)velStride)) + __cuda_local_var_42934_18_non_const_x)]))) ? (0.0F) : (__cuda_local_var_42938_11_non_const_y_ + (vertical_flow[((__cuda_local_var_42935_18_non_const_y * ((unsigned)velStride)) + __cuda_local_var_42934_18_non_const_x)])))) ? ((float)(height - 1)) : (((0.0F) > (__cuda_local_var_42938_11_non_const_y_ + (vertical_flow[((__cuda_local_var_42935_18_non_const_y * ((unsigned)velStride)) + __cuda_local_var_42934_18_non_const_x)]))) ? (0.0F) : (__cuda_local_var_42938_11_non_const_y_ + (vertical_flow[((__cuda_local_var_42935_18_non_const_y * ((unsigned)velStride)) + __cuda_local_var_42934_18_non_const_x)]))));
+# 29 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__cuda_local_var_42943_9_non_const_flr_x = ((int)__float2int_rz((float)((floorf(__cuda_local_var_42937_11_non_const_x_)))));
+# 30 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__cuda_local_var_42944_9_non_const_flr_y = ((int)__float2int_rz((float)((floorf(__cuda_local_var_42938_11_non_const_y_)))));
+# 32 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__cuda_local_var_42946_11_non_const_x_ratio = (__cuda_local_var_42937_11_non_const_x_ - ((float)__cuda_local_var_42943_9_non_const_flr_x));
+# 33 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__cuda_local_var_42947_11_non_const_y_ratio = (__cuda_local_var_42938_11_non_const_y_ - ((float)__cuda_local_var_42944_9_non_const_flr_y));
+# 35 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__cuda_local_var_42949_11_non_const_val = ((((1.0F) - __cuda_local_var_42946_11_non_const_x_ratio) * ((1.0F) - __cuda_local_var_42947_11_non_const_y_ratio)) * (d_u_[((__cuda_local_var_42944_9_non_const_flr_y * u_Stride) + __cuda_local_var_42943_9_non_const_flr_x)]));
+# 37 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+if ((__cuda_local_var_42943_9_non_const_flr_x + 1) < width) {
+# 38 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__cuda_local_var_42949_11_non_const_val += ((__cuda_local_var_42946_11_non_const_x_ratio * ((1.0F) - __cuda_local_var_42947_11_non_const_y_ratio)) * (d_u_[((__cuda_local_var_42944_9_non_const_flr_y * u_Stride) + (__cuda_local_var_42943_9_non_const_flr_x + 1))])); }
+# 40 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+if ((__cuda_local_var_42944_9_non_const_flr_y + 1) < height)
 # 41 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+{
+# 42 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__cuda_local_var_42949_11_non_const_val += ((((1.0F) - __cuda_local_var_42946_11_non_const_x_ratio) * __cuda_local_var_42947_11_non_const_y_ratio) * (d_u_[(((__cuda_local_var_42944_9_non_const_flr_y + 1) * u_Stride) + __cuda_local_var_42943_9_non_const_flr_x)]));
+# 44 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+if ((__cuda_local_var_42943_9_non_const_flr_x + 1) < width) {
+# 45 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__cuda_local_var_42949_11_non_const_val += ((__cuda_local_var_42946_11_non_const_x_ratio * __cuda_local_var_42947_11_non_const_y_ratio) * (d_u_[(((__cuda_local_var_42944_9_non_const_flr_y + 1) * u_Stride) + (__cuda_local_var_42943_9_non_const_flr_x + 1))])); }
+# 46 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+}
+# 48 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+(out[((__cuda_local_var_42935_18_non_const_y * ((unsigned)outStride)) + __cuda_local_var_42934_18_non_const_x)]) = __cuda_local_var_42949_11_non_const_val; 
+# 49 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+}}
+# 65 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__global__ __var_used__ void _Z11kernel_blurPfiS_iS_iii(
+# 65 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+float *out, 
+# 65 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+int outStride, 
+# 65 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+float *in, 
+# 65 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+int inStride, 
+# 65 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+float *blur_kernel, 
+# 65 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+int blurWidth, 
+# 65 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+int width, 
+# 65 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+int height){
+# 66 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+{
+# 68 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+ unsigned __cuda_local_var_42982_18_non_const_x;
+# 69 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+ unsigned __cuda_local_var_42983_18_non_const_y;
+# 71 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+ float __cuda_local_var_42985_11_non_const_val;
+# 68 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__cuda_local_var_42982_18_non_const_x = (((blockIdx.x) * (blockDim.x)) + (threadIdx.x));
+# 69 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__cuda_local_var_42983_18_non_const_y = (((blockIdx.y) * (blockDim.y)) + (threadIdx.y));
+# 71 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__cuda_local_var_42985_11_non_const_val = (0.0F); {
+# 75 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+ int i;
+# 75 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+i = ((-blurWidth) / 2);
+# 75 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+for (; (i <= (blurWidth / 2)); i++)
+# 76 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+{ {
+# 77 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+ int j;
+# 77 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+j = ((-blurWidth) / 2);
+# 77 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+for (; (j <= (blurWidth / 2)); j++)
+# 78 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+{
+# 79 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+if (((__cuda_local_var_42983_18_non_const_y + ((unsigned)i)) < ((unsigned)height)) && ((__cuda_local_var_42982_18_non_const_x + ((unsigned)j)) < ((unsigned)width)))
+# 80 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+{
+# 81 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+__cuda_local_var_42985_11_non_const_val += ((blur_kernel[((i * blurWidth) + j)]) * (in[(((__cuda_local_var_42983_18_non_const_y + ((unsigned)i)) * ((unsigned)inStride)) + (__cuda_local_var_42982_18_non_const_x + ((unsigned)j)))]));
+# 82 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+}
+# 83 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+} }
+# 84 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+} }
+# 86 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
+(out[((__cuda_local_var_42983_18_non_const_y * ((unsigned)outStride)) + __cuda_local_var_42982_18_non_const_x)]) = __cuda_local_var_42985_11_non_const_val; 
+# 88 "/home/ankur/workspace/code/Superresolution/./src/kernels/aux_updates.cu"
 }}

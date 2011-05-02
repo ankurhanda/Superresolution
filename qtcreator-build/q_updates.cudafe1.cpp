@@ -19069,54 +19069,60 @@ printf(" -> %s NVIDIA Display Driver.\n", sDriverReq);
 # 29
 } 
 # 15 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-void kernel_dualq(int N_imgs, float **q, float **DBWu_, float epsilon_d, float sigma, float **f, float xisqr, unsigned stride) ;
-#if 0
+void kernel_q_SubtractDBWiu_fAdd_yAndReproject(float *result, int resultStride, float *
 # 16
+d_DBWiu, int DBWiuStride, float *
+# 17
+d_fi, int imgStride, float 
+# 18
+sigma_q, float xisqr, float epsilon_d, int 
+# 19
+width_down, int height_down) ;
+#if 0
+# 20
 { 
-# 22
-unsigned x = (((blockIdx.x) * (blockDim.x)) + (threadIdx.x)); 
-# 23
-unsigned y = (((blockIdx.y) * (blockDim.y)) + (threadIdx.y)); 
 # 26
-for (int img_no = 0; img_no < N_imgs; img_no++) 
+unsigned x = (((blockIdx.x) * (blockDim.x)) + (threadIdx.x)); 
 # 27
-{ 
-# 28
-((q[img_no])[(y * stride) + x]) = ((((q[img_no])[(y * stride) + x]) + ((sigma * xisqr) * (((DBWu_[img_no])[(y * stride) + x]) - ((f[img_no])[(y * stride) + x])))) / ((1) + ((sigma * epsilon_d) / xisqr))); 
-# 29
-((q[img_no])[(y * stride) + x]) = ((((q[img_no])[(y * stride) + x]) + ((sigma * xisqr) * (((DBWu_[img_no])[(y * stride) + x]) - ((f[img_no])[(y * stride) + x])))) / ((1) + ((sigma * epsilon_d) / xisqr))); 
+unsigned y = (((blockIdx.y) * (blockDim.y)) + (threadIdx.y)); 
+# 30
+if (((y * resultStride) + x) < (width_down * height_down)) 
 # 31
-float pxval = ((q[img_no])[(y * stride) + x]); 
-# 32
-float pyval = ((q[img_no])[(y * stride) + x]); 
+{ 
+# 33
+float result_val = ((result[(y * resultStride) + x]) + ((sigma_q * xisqr) * ((d_DBWiu[(y * DBWiuStride) + x]) - (d_fi[(y * imgStride) + x])))); 
 # 34
-float reprojection = (0); 
-# 35
-reprojection = (((-(1.0F)) > (((1.0F) < ((q[img_no])[(y * stride) + x])) ? (1.0F) : ((q[img_no])[(y * stride) + x]))) ? (-(1.0F)) : (((1.0F) < ((q[img_no])[(y * stride) + x])) ? (1.0F) : ((q[img_no])[(y * stride) + x]))); 
-# 37
-((q[img_no])[(y * stride) + x]) = (((q[img_no])[(y * stride) + x]) / reprojection); 
+result_val = (result_val / ((1) + ((sigma_q * epsilon_d) / xisqr))); 
+# 36
+result_val = ((((-xisqr) * (1.0F)) > ((xisqr < result_val) ? xisqr : result_val)) ? ((-xisqr) * (1.0F)) : ((xisqr < result_val) ? xisqr : result_val)); 
 # 38
-((q[img_no])[(y * stride) + x]) = (((q[img_no])[(y * stride) + x]) / reprojection); 
+(result[(y * resultStride) + x]) = result_val; 
 # 39
 }  
-# 42
+# 41
 } 
 #endif
-# 47 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
-extern "C" void launch_kernel_dual_variable_q(int N_imgs, float **q, float **DBWu_, float epsilon_d, float sigma, float **f, float xisqr, unsigned 
+# 44 "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
+extern "C" void launch_kernel_q_SubtractDBWiu_fAdd_yAndReproject(float *result, int resultStride, float *
+# 45
+d_DBWiu, int DBWiuStride, float *
+# 46
+d_fi, int imgStride, float 
+# 47
+sigma_q, float xisqr, float epsilon_d, int 
 # 48
-stride, unsigned mesh_width, unsigned mesh_height) 
+width_down, int height_down) 
 # 49
 { 
-# 51
+# 50
 dim3 block(8, 8, 1); 
+# 51
+dim3 grid(width_down / (block.x), height_down / (block.y), 1); 
 # 52
-dim3 grid(mesh_width / (block.x), mesh_height / (block.y), 1); 
-# 53
-cudaConfigureCall(grid, block) ? ((void)0) : kernel_dualq(N_imgs, q, DBWu_, epsilon_d, sigma, f, xisqr, stride); 
-# 54
-__cutilGetLastError("execution failed\n", "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu", 54); 
-# 55
+cudaConfigureCall(grid, block) ? ((void)0) : kernel_q_SubtractDBWiu_fAdd_yAndReproject(result, resultStride, d_DBWiu, DBWiuStride, d_fi, imgStride, sigma_q, xisqr, epsilon_d, width_down, height_down); 
+# 56
+__cutilGetLastError("execution failed\n", "/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu", 56); 
+# 57
 } 
 # 1 "q_updates.cudafe1.stub.c"
 #include "q_updates.cudafe1.stub.c"
