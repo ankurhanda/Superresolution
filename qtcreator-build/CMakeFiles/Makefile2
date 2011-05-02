@@ -62,7 +62,7 @@ CMAKE_BINARY_DIR = /home/ankur/workspace/code/Superresolution/qtcreator-build
 CMakeFiles/Super_resolution.dir/all:
 	$(MAKE) -f CMakeFiles/Super_resolution.dir/build.make CMakeFiles/Super_resolution.dir/depend
 	$(MAKE) -f CMakeFiles/Super_resolution.dir/build.make CMakeFiles/Super_resolution.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/ankur/workspace/code/Superresolution/qtcreator-build/CMakeFiles  1 2 3
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/ankur/workspace/code/Superresolution/qtcreator-build/CMakeFiles  1 2 3 4 5 6 7
 	@echo "Built target Super_resolution"
 .PHONY : CMakeFiles/Super_resolution.dir/all
 
@@ -72,7 +72,7 @@ all: CMakeFiles/Super_resolution.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/Super_resolution.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ankur/workspace/code/Superresolution/qtcreator-build/CMakeFiles 3
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/ankur/workspace/code/Superresolution/qtcreator-build/CMakeFiles 7
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/Super_resolution.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/ankur/workspace/code/Superresolution/qtcreator-build/CMakeFiles 0
 .PHONY : CMakeFiles/Super_resolution.dir/rule

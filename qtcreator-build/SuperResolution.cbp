@@ -92,11 +92,27 @@
       </Unit>
       <Unit filename="/home/ankur/workspace/code/Superresolution/src/main.cpp">
       </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/qtcreator-build/./Super_resolution_generated_aux_updates.cu.o">
+      </Unit>
       <Unit filename="/home/ankur/workspace/code/Superresolution/qtcreator-build/./Super_resolution_generated_kernel.cu.o">
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/qtcreator-build/./Super_resolution_generated_p_update.cu.o">
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/qtcreator-build/./Super_resolution_generated_q_updates.cu.o">
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/qtcreator-build/./Super_resolution_generated_u_updates.cu.o">
       </Unit>
       <Unit filename="/home/ankur/workspace/code/Superresolution/src/flow.h">
       </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/src/kernels/aux_updates.cu">
+      </Unit>
       <Unit filename="/home/ankur/workspace/code/Superresolution/src/kernels/kernel.cu">
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/src/kernels/p_update.cu">
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/src/kernels/q_updates.cu">
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/src/kernels/u_updates.cu">
       </Unit>
       <Unit filename="/home/ankur/workspace/code/Superresolution/src/utils.h">
       </Unit>
@@ -120,6 +136,18 @@
       </Unit>
       <Unit filename="/home/ankur/workspace/code/Superresolution/CMakeModules/FindCVD.cmake">
           <Option virtualFolder="CMake Files\CMakeModules\" />
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/CMakeModules/FindCUDA/run_nvcc.cmake">
+          <Option virtualFolder="CMake Files\CMakeModules\FindCUDA\" />
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/CMakeModules/FindCUDA/run_nvcc.cmake">
+          <Option virtualFolder="CMake Files\CMakeModules\FindCUDA\" />
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/CMakeModules/FindCUDA/run_nvcc.cmake">
+          <Option virtualFolder="CMake Files\CMakeModules\FindCUDA\" />
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/CMakeModules/FindCUDA/run_nvcc.cmake">
+          <Option virtualFolder="CMake Files\CMakeModules\FindCUDA\" />
       </Unit>
       <Unit filename="/home/ankur/workspace/code/Superresolution/CMakeModules/FindCUDA/run_nvcc.cmake">
           <Option virtualFolder="CMake Files\CMakeModules\FindCUDA\" />

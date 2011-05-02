@@ -12,46 +12,47 @@
 #endif
 
 
-__global__ void kernel_dualq(int N_imgs, float** q, float** DBWu_, float epsilon_d, float sigma, float** f, float xisqr, unsigned int stride)
+__global__ void kernel_q_SubtractDBWiu_fAdd_yAndReproject(float *result, int resultStride,
+                                                          float *d_DBWiu,int DBWiuStride,
+                                                          float *d_fi,   int imgStride,
+                                                          float sigma_q,float xisqr)
 {
 
 
-    //q^{n+1} = \frac{q^n + \sigma \xi^{2} (DBWu_ - f)}{ 1 + epsilon_d/}
-    //q^{n+1} = p^{n+1} / max ( 1, |p^{n+1}|/lambda )
+    //q^{n+1} = \frac{q^n + \sigma \xi^{2} (DBWu_ - f)}{ 1 + epsilon_d*sigma_q/xisqr}
+    //q^{n+1} =  max(-1.0f, min(1.0f, q^{n+1}))
 
     unsigned int x = blockIdx.x*blockDim.x + threadIdx.x;
     unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
 
     // write output vertex
-    for (int img_no = 0 ; img_no < N_imgs; img_no++)
+    if ( y*resultStride + x < result_size)
     {
-        q[img_no][y*stride+x] = (q[img_no][y*stride+x] + sigma*xisqr*(DBWu_[img_no][y*stride+x] - f[img_no][y*stride+x]))/(1+sigma*epsilon_d/xisqr);
-        q[img_no][y*stride+x] = (q[img_no][y*stride+x] + sigma*xisqr*(DBWu_[img_no][y*stride+x] - f[img_no][y*stride+x]))/(1+sigma*epsilon_d/xisqr);
 
-        float pxval = q[img_no][y*stride+x];
-        float pyval = q[img_no][y*stride+x];
+       float result_val = result[y*resultStride+x] + sigma_q*xisqr*(d_DBWiu[y*DBWiuStride+x]-d_fi[y*imgStride+x]);
+       result_val = result_val/(1 + sigma*epsilon_d/xisqr);
 
-        float reprojection = 0;
-        reprojection   = max(-1.0f,min(1.0f,q[img_no][y*stride+x]));
+       result_val = max(-1.0f, min(1.0f, result_val)); // clamped reprojection
 
-        q[img_no][y*stride+x] = q[img_no][y*stride+x]/reprojection;
-        q[img_no][y*stride+x] = q[img_no][y*stride+x]/reprojection;
+       result[y*resultStride+x] = result_val;
     }
 
-
 }
 
 
-
-// Wrapper for the __global__ call that sets up the kernel call
-extern "C" void launch_kernel_dual_variable_q(int N_imgs, float** q, float** DBWu_, float epsilon_d, float sigma, float** f, float xisqr,
-                                              unsigned int stride, unsigned int mesh_width, unsigned int mesh_height)
+extern "C" void launch_kernel_q_SubtractDBWiu_fAdd_yAndReproject(float *result, int resultStride,
+                                                                 float *d_DBWiu,int DBWiuStride,
+                                                                 float *d_fi,   int imgStride,
+                                                                 float sigma_q,float xisqr)
 {
-    // execute the kernel
     dim3 block(8, 8, 1);
     dim3 grid(mesh_width / block.x, mesh_height / block.y, 1);
-    kernel_dualq<<< grid, block>>>(N_imgs, q, DBWu_, epsilon_d, sigma, f, xisqr, stride);
+    kernel_q_SubtractDBWiu_fAdd_yAndReproject<<< grid, block>>>(result, resultStride,
+                                                                d_DBWiu, DBWiuStride,
+                                                                d_fi, imgStride,
+                                                                sigma_q, xisqr);//N_imgs, q, DBWu_, epsilon_d, sigma, f, xisqr, stride);
     cutilCheckMsg("execution failed\n");
 }
+
 
 #endif // #ifndef _SIMPLEGL_KERNEL_H_

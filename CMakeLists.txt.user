@@ -16,7 +16,7 @@
    <value key="ProjectExplorer.ProjectConfiguration.DisplayName" type="QString">Desktop</value>
    <value key="ProjectExplorer.ProjectConfiguration.Id" type="QString">CMakeProjectManager.DefaultCMakeTarget</value>
    <value key="ProjectExplorer.Target.ActiveBuildConfiguration" type="int">0</value>
-   <value key="ProjectExplorer.Target.ActiveRunConfiguration" type="int">0</value>
+   <value key="ProjectExplorer.Target.ActiveRunConfiguration" type="int">1</value>
    <valuemap key="ProjectExplorer.Target.BuildConfiguration.0" type="QVariantMap">
     <value key="CMakeProjectManager.CMakeBuildConfiguration.BuildDirectory" type="QString">/home/ankur/workspace/code/Superresolution/qtcreator-build</value>
     <value key="CMakeProjectManager.CMakeBuildConfiguration.MsvcVersion" type="QString"></value>
