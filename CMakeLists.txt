@@ -41,9 +41,10 @@ FIND_PACKAGE(CVD REQUIRED)
 SET(
   SOURCES
   ./src/kernels/kernel.cu
-  ./src/kernels/p_update.cu
-  ./src/kernels/q_updates.cu
-  ./src/kernels/u_updates.cu
+#  ./src/kernels/p_update.cu
+#  ./src/kernels/q_updates.cu
+#  ./src/kernels/u_updates.cu
+#  ./src/kernels/aux_updates.cu
  ./src/utils.h
  #   ./src/flow.h
  ./src/flow.cpp

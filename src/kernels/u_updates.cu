@@ -12,7 +12,7 @@
 #endif
 
 
-__global__ void kernel_dualu(float tau, float *px, float *py, float xisqr, float *sum_wiT_biT_diT_q, int width, int height,
+__global__ void kernel_primalu(float tau, float *px, float *py, float xisqr, float *sum_wiT_biT_diT_q, int width, int height,
                              unsigned int stride)
 {
 
@@ -41,13 +41,13 @@ __global__ void kernel_dualu(float tau, float *px, float *py, float xisqr, float
 
 
 // Wrapper for the __global__ call that sets up the kernel call
-extern "C" void launch_kernel_dual_variable_u(float *px, float *py, float* ux_, float *uy_, float epsilon_u, float sigma, float lambda,
+extern "C" void launch_kernel_dual_primal_u(float *px, float *py, float* ux_, float *uy_, float epsilon_u, float sigma, float lambda,
                                               unsigned int stride, unsigned int mesh_width, unsigned int mesh_height)
 {
     // execute the kernel
     dim3 block(8, 8, 1);
     dim3 grid(mesh_width / block.x, mesh_height / block.y, 1);
-    kernel_dualp<<< grid, block>>>(tau, px, py, xisqr, sum_wiT_biT_diT_q, width, height, stride);
+    kernel_primalu<<< grid, block>>>(tau, px, py, xisqr, sum_wiT_biT_diT_q, width, height, stride);
     cutilCheckMsg("execution failed\n");
 }
 

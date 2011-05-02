@@ -25,9 +25,10 @@ void computeColor(float fx, float fy, uchar *pix);
 void MotionToColor(float *u, float *v, int height, int width, CVD::Image< Rgb<byte> > &colim, float maxmotion);
 
 int read_horizontal_vertical_flow(float *u, float *v, int img_no, int N_rows_upimg, int N_cols_upimg);
-void buildWMatrixBilinearInterpolation(int N_imgs, int N_rows_upimg, int N_cols_upimg, float** valPtr, int** rowPtr, int** colPtr);
-void buildDMatrixLebesgueMeasure(int Nnz, int size_have, int size_wanted, int N_rows_upimg, int N_cols_upimg, /*float* DMatvalPtr, int* DMatrowPtr, int* DMatcolPtr,*/
-                                 float scale_factor, TooN::Matrix<>&A, std::map<int, float>&matindex_matval );
+//void buildWMatrixBilinearInterpolation(int N_imgs, int N_rows_upimg, int N_cols_upimg, float** valPtr, int** rowPtr, int** colPtr);
+void buildWMatrixBilinearInterpolation(int N_imgs, int size_wanted, int N_rows_upimg, int N_cols_upimg, std::vector< std::map<int, float> >& h_vectorofMaps);
+void buildDMatrixLebesgueMeasure(int size_have, int size_wanted,int N_rows_upimg, int N_cols_upimg, /*float *DMatvalPtr, int *DMatrowPtr, int *DMatcolPtr,*/
+                                 float scale_factor, TooN::Matrix<>&A, std::map<int, float>& matindex_matval, std::map<int, float>&matindex_matvalT );
 
 
 #endif

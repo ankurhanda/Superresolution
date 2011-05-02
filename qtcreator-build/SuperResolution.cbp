@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+   <FileVersion major="1" minor="6" />
+   <Project>
+      <Option title="SuperResolution" />
+      <Option makefile_is_custom="1" />
+      <Option compiler="gcc" />
+      <Option virtualFolders="CMake Files\;CMake Files\CMakeModules\;CMake Files\CMakeModules\FindCUDA\;" />
+      <Build>
+      <Target title="all">
+         <Option working_dir="/home/ankur/workspace/code/Superresolution/qtcreator-build" />
+         <Option type="4" />
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; all" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="Super_resolution">
+         <Option output="/home/ankur/workspace/code/Superresolution/qtcreator-build/Super_resolution" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/ankur/workspace/code/Superresolution/qtcreator-build" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/usr/local/cuda/include" />
+            <Add directory="/home/ankur/workspace/code/Superresolution" />
+            <Add directory="/home/ankur/workspace/code/Superresolution/src" />
+            <Add directory="/home/ankur/workspace/code/Superresolution/qtcreator-build" />
+            <Add directory="/home/ankur/NVIDIA_GPU_Computing_SDK/C/common/inc" />
+            <Add directory="/home/ankur/NVIDIA_GPU_Computing_SDK/C/../shared/inc" />
+            <Add directory="/usr/include" />
+            <Add directory="/home/ankur/workspace/code/Pangolin" />
+            <Add directory="/home/ankur/workspace/code/Pangolin/build" />
+            <Add directory="/usr/local/include" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; Super_resolution" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="Super_resolution/fast">
+         <Option output="/home/ankur/workspace/code/Superresolution/qtcreator-build/Super_resolution" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/ankur/workspace/code/Superresolution/qtcreator-build" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/usr/local/cuda/include" />
+            <Add directory="/home/ankur/workspace/code/Superresolution" />
+            <Add directory="/home/ankur/workspace/code/Superresolution/src" />
+            <Add directory="/home/ankur/workspace/code/Superresolution/qtcreator-build" />
+            <Add directory="/home/ankur/NVIDIA_GPU_Computing_SDK/C/common/inc" />
+            <Add directory="/home/ankur/NVIDIA_GPU_Computing_SDK/C/../shared/inc" />
+            <Add directory="/usr/include" />
+            <Add directory="/home/ankur/workspace/code/Pangolin" />
+            <Add directory="/home/ankur/workspace/code/Pangolin/build" />
+            <Add directory="/usr/local/include" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; Super_resolution/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="edit_cache">
+         <Option working_dir="/home/ankur/workspace/code/Superresolution/qtcreator-build" />
+         <Option type="4" />
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; edit_cache" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="rebuild_cache">
+         <Option working_dir="/home/ankur/workspace/code/Superresolution/qtcreator-build" />
+         <Option type="4" />
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; rebuild_cache" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/ankur/workspace/code/Superresolution/qtcreator-build/Makefile&quot; clean" />
+         </MakeCommands>
+      </Target>
+      </Build>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/src/flow.cpp">
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/src/main.cpp">
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/qtcreator-build/./Super_resolution_generated_kernel.cu.o">
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/src/flow.h">
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/src/kernels/kernel.cu">
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/src/utils.h">
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\" />
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/CMakeModules/SetPlatformVars.cmake">
+          <Option virtualFolder="CMake Files\CMakeModules\" />
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/CMakeModules/FindFREEGLUT.cmake">
+          <Option virtualFolder="CMake Files\CMakeModules\" />
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/CMakeModules/FindCUDA.cmake">
+          <Option virtualFolder="CMake Files\CMakeModules\" />
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/CMakeModules/FindGLEW.cmake">
+          <Option virtualFolder="CMake Files\CMakeModules\" />
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/CMakeModules/FindPangolin.cmake">
+          <Option virtualFolder="CMake Files\CMakeModules\" />
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/CMakeModules/FindCVD.cmake">
+          <Option virtualFolder="CMake Files\CMakeModules\" />
+      </Unit>
+      <Unit filename="/home/ankur/workspace/code/Superresolution/CMakeModules/FindCUDA/run_nvcc.cmake">
+          <Option virtualFolder="CMake Files\CMakeModules\FindCUDA\" />
+      </Unit>
+   </Project>
+</CodeBlocks_project_file>

@@ -1,0 +1,177 @@
+	.version 2.3
+	.target sm_20
+	.address_size 64
+	// compiled with /usr/local/cuda/open64/lib//be
+	// nvopencc 4.0 built on 2011-03-20
+
+	//-----------------------------------------------------------
+	// Compiling q_updates.cpp3.i (/tmp/ccBI#.05iUzF)
+	//-----------------------------------------------------------
+
+	//-----------------------------------------------------------
+	// Options:
+	//-----------------------------------------------------------
+	//  Target:ptx, ISA:sm_20, Endian:little, Pointer Size:64
+	//  -O3	(Optimization level)
+	//  -g0	(Debug level)
+	//  -m2	(Report advisories)
+	//-----------------------------------------------------------
+
+	.file	1	"<command-line>"
+	.file	2	"q_updates.cudafe2.gpu"
+	.file	3	"/usr/lib/gcc/x86_64-linux-gnu/4.4.5/include/stddef.h"
+	.file	4	"/usr/local/cuda/include/crt/device_runtime.h"
+	.file	5	"/usr/local/cuda/include/host_defines.h"
+	.file	6	"/usr/local/cuda/include/builtin_types.h"
+	.file	7	"/usr/local/cuda/include/device_types.h"
+	.file	8	"/usr/local/cuda/include/driver_types.h"
+	.file	9	"/usr/local/cuda/include/surface_types.h"
+	.file	10	"/usr/local/cuda/include/texture_types.h"
+	.file	11	"/usr/local/cuda/include/vector_types.h"
+	.file	12	"/usr/local/cuda/include/device_launch_parameters.h"
+	.file	13	"/usr/local/cuda/include/crt/storage_class.h"
+	.file	14	"/usr/include/bits/types.h"
+	.file	15	"/usr/include/time.h"
+	.file	16	"/home/ankur/workspace/code/Superresolution/./src/kernels/q_updates.cu"
+	.file	17	"/usr/local/cuda/include/common_functions.h"
+	.file	18	"/usr/local/cuda/include/math_functions.h"
+	.file	19	"/usr/local/cuda/include/math_constants.h"
+	.file	20	"/usr/local/cuda/include/device_functions.h"
+	.file	21	"/usr/local/cuda/include/sm_11_atomic_functions.h"
+	.file	22	"/usr/local/cuda/include/sm_12_atomic_functions.h"
+	.file	23	"/usr/local/cuda/include/sm_13_double_functions.h"
+	.file	24	"/usr/local/cuda/include/sm_20_atomic_functions.h"
+	.file	25	"/usr/local/cuda/include/sm_20_intrinsics.h"
+	.file	26	"/usr/local/cuda/include/surface_functions.h"
+	.file	27	"/usr/local/cuda/include/texture_fetch_functions.h"
+	.file	28	"/usr/local/cuda/include/math_functions_dbl_ptx3.h"
+
+
+	.entry _Z12kernel_dualqiPPfS0_ffS0_fj (
+		.param .s32 __cudaparm__Z12kernel_dualqiPPfS0_ffS0_fj_N_imgs,
+		.param .u64 __cudaparm__Z12kernel_dualqiPPfS0_ffS0_fj_q,
+		.param .u64 __cudaparm__Z12kernel_dualqiPPfS0_ffS0_fj_DBWu_,
+		.param .f32 __cudaparm__Z12kernel_dualqiPPfS0_ffS0_fj_epsilon_d,
+		.param .f32 __cudaparm__Z12kernel_dualqiPPfS0_ffS0_fj_sigma,
+		.param .u64 __cudaparm__Z12kernel_dualqiPPfS0_ffS0_fj_f,
+		.param .f32 __cudaparm__Z12kernel_dualqiPPfS0_ffS0_fj_xisqr,
+		.param .u32 __cudaparm__Z12kernel_dualqiPPfS0_ffS0_fj_stride)
+	{
+	.reg .u32 %r<22>;
+	.reg .u64 %rd<22>;
+	.reg .f32 %f<30>;
+	.reg .pred %p<7>;
+	.loc	16	15	0
+$LDWbegin__Z12kernel_dualqiPPfS0_ffS0_fj:
+	ld.param.s32 	%r1, [__cudaparm__Z12kernel_dualqiPPfS0_ffS0_fj_N_imgs];
+	mov.u32 	%r2, 0;
+	setp.le.s32 	%p1, %r1, %r2;
+	@%p1 bra 	$Lt_0_3586;
+	mov.u32 	%r3, %ctaid.x;
+	mov.u32 	%r4, %ntid.x;
+	mul.lo.u32 	%r5, %r3, %r4;
+	mov.u32 	%r6, %tid.x;
+	add.u32 	%r7, %r6, %r5;
+	mov.u32 	%r8, %ctaid.y;
+	mov.u32 	%r9, %ntid.y;
+	mul.lo.u32 	%r10, %r8, %r9;
+	mov.u32 	%r11, %tid.y;
+	add.u32 	%r12, %r11, %r10;
+	mov.s32 	%r13, %r1;
+	ld.param.f32 	%f1, [__cudaparm__Z12kernel_dualqiPPfS0_ffS0_fj_xisqr];
+	ld.param.f32 	%f2, [__cudaparm__Z12kernel_dualqiPPfS0_ffS0_fj_sigma];
+	mul.ftz.f32 	%f3, %f1, %f2;
+	ld.param.f32 	%f4, [__cudaparm__Z12kernel_dualqiPPfS0_ffS0_fj_epsilon_d];
+	mul.ftz.f32 	%f5, %f4, %f2;
+	div.approx.ftz.f32 	%f6, %f5, %f1;
+	ld.param.u32 	%r14, [__cudaparm__Z12kernel_dualqiPPfS0_ffS0_fj_stride];
+	mul.lo.u32 	%r15, %r14, %r12;
+	ld.param.u64 	%rd1, [__cudaparm__Z12kernel_dualqiPPfS0_ffS0_fj_q];
+	ld.param.u64 	%rd2, [__cudaparm__Z12kernel_dualqiPPfS0_ffS0_fj_DBWu_];
+	ld.param.u64 	%rd3, [__cudaparm__Z12kernel_dualqiPPfS0_ffS0_fj_f];
+	mov.f32 	%f7, 0f3f800000;     	// 1
+	add.ftz.f32 	%f8, %f6, %f7;
+	add.u32 	%r16, %r7, %r15;
+	cvt.u64.u32 	%rd4, %r16;
+	mul.wide.u32 	%rd5, %r16, 4;
+	mov.s32 	%r17, 0;
+	mov.s32 	%r18, %r13;
+$Lt_0_4098:
+ //<loop> Loop body line 15, nesting depth: 1, estimated iterations: unknown
+	.loc	16	28	0
+	ld.global.u64 	%rd6, [%rd1+0];
+	add.u64 	%rd7, %rd6, %rd5;
+	ld.f32 	%f9, [%rd7+0];
+	ld.global.u64 	%rd8, [%rd2+0];
+	add.u64 	%rd9, %rd8, %rd5;
+	ld.f32 	%f10, [%rd9+0];
+	ld.global.u64 	%rd10, [%rd3+0];
+	add.u64 	%rd11, %rd10, %rd5;
+	ld.f32 	%f11, [%rd11+0];
+	sub.ftz.f32 	%f12, %f10, %f11;
+	fma.rn.ftz.f32 	%f13, %f3, %f12, %f9;
+	div.approx.ftz.f32 	%f14, %f13, %f8;
+	st.f32 	[%rd7+0], %f14;
+	.loc	16	29	0
+	ld.global.u64 	%rd12, [%rd1+0];
+	add.u64 	%rd13, %rd12, %rd5;
+	ld.f32 	%f15, [%rd13+0];
+	ld.global.u64 	%rd14, [%rd2+0];
+	add.u64 	%rd15, %rd14, %rd5;
+	ld.f32 	%f16, [%rd15+0];
+	ld.global.u64 	%rd16, [%rd3+0];
+	add.u64 	%rd17, %rd16, %rd5;
+	ld.f32 	%f17, [%rd17+0];
+	sub.ftz.f32 	%f18, %f16, %f17;
+	fma.rn.ftz.f32 	%f19, %f3, %f18, %f15;
+	div.approx.ftz.f32 	%f20, %f19, %f8;
+	st.f32 	[%rd13+0], %f20;
+	ld.global.u64 	%rd18, [%rd1+0];
+	add.u64 	%rd19, %rd18, %rd5;
+	ld.f32 	%f21, [%rd19+0];
+	mov.f32 	%f22, 0f3f800000;    	// 1
+	setp.gt.ftz.f32 	%p2, %f21, %f22;
+	@!%p2 bra 	$Lt_0_4610;
+	.loc	16	35	0
+	mov.s32 	%r19, 1;
+	bra.uni 	$Lt_0_4354;
+$Lt_0_4610:
+	mov.f32 	%f23, 0fbf800000;    	// -1
+	setp.lt.ftz.f32 	%p3, %f21, %f23;
+	selp.s32 	%r19, 0, 1, %p3;
+$Lt_0_4354:
+	mov.u32 	%r20, 0;
+	setp.eq.s32 	%p4, %r19, %r20;
+	@%p4 bra 	$Lt_0_5122;
+	@!%p2 bra 	$Lt_0_5634;
+	mov.f32 	%f24, 0f3f800000;    	// 1
+	bra.uni 	$Lt_0_5378;
+$Lt_0_5634:
+	mov.f32 	%f24, %f21;
+$Lt_0_5378:
+	mov.f32 	%f25, %f24;
+	bra.uni 	$Lt_0_4866;
+$Lt_0_5122:
+	mov.f32 	%f25, 0fbf800000;    	// -1
+$Lt_0_4866:
+	.loc	16	37	0
+	div.approx.ftz.f32 	%f26, %f21, %f25;
+	st.f32 	[%rd19+0], %f26;
+	.loc	16	38	0
+	ld.global.u64 	%rd20, [%rd1+0];
+	add.u64 	%rd19, %rd20, %rd5;
+	ld.f32 	%f27, [%rd19+0];
+	div.approx.ftz.f32 	%f28, %f27, %f25;
+	st.f32 	[%rd19+0], %f28;
+	add.s32 	%r17, %r17, 1;
+	add.u64 	%rd3, %rd3, 8;
+	add.u64 	%rd2, %rd2, 8;
+	add.u64 	%rd1, %rd1, 8;
+	setp.ne.s32 	%p5, %r1, %r17;
+	@%p5 bra 	$Lt_0_4098;
+$Lt_0_3586:
+	.loc	16	42	0
+	exit;
+$LDWend__Z12kernel_dualqiPPfS0_ffS0_fj:
+	} // _Z12kernel_dualqiPPfS0_ffS0_fj
+

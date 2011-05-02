@@ -1,0 +1,134 @@
+	.version 2.3
+	.target sm_20
+	.address_size 64
+	// compiled with /usr/local/cuda/open64/lib//be
+	// nvopencc 4.0 built on 2011-03-20
+
+	//-----------------------------------------------------------
+	// Compiling p_update.cpp3.i (/tmp/ccBI#.qXJvOd)
+	//-----------------------------------------------------------
+
+	//-----------------------------------------------------------
+	// Options:
+	//-----------------------------------------------------------
+	//  Target:ptx, ISA:sm_20, Endian:little, Pointer Size:64
+	//  -O3	(Optimization level)
+	//  -g0	(Debug level)
+	//  -m2	(Report advisories)
+	//-----------------------------------------------------------
+
+	.file	1	"<command-line>"
+	.file	2	"p_update.cudafe2.gpu"
+	.file	3	"/usr/lib/gcc/x86_64-linux-gnu/4.4.5/include/stddef.h"
+	.file	4	"/usr/local/cuda/include/crt/device_runtime.h"
+	.file	5	"/usr/local/cuda/include/host_defines.h"
+	.file	6	"/usr/local/cuda/include/builtin_types.h"
+	.file	7	"/usr/local/cuda/include/device_types.h"
+	.file	8	"/usr/local/cuda/include/driver_types.h"
+	.file	9	"/usr/local/cuda/include/surface_types.h"
+	.file	10	"/usr/local/cuda/include/texture_types.h"
+	.file	11	"/usr/local/cuda/include/vector_types.h"
+	.file	12	"/usr/local/cuda/include/device_launch_parameters.h"
+	.file	13	"/usr/local/cuda/include/crt/storage_class.h"
+	.file	14	"/usr/include/bits/types.h"
+	.file	15	"/usr/include/time.h"
+	.file	16	"/home/ankur/workspace/code/Superresolution/./src/kernels/p_update.cu"
+	.file	17	"/usr/local/cuda/include/common_functions.h"
+	.file	18	"/usr/local/cuda/include/math_functions.h"
+	.file	19	"/usr/local/cuda/include/math_constants.h"
+	.file	20	"/usr/local/cuda/include/device_functions.h"
+	.file	21	"/usr/local/cuda/include/sm_11_atomic_functions.h"
+	.file	22	"/usr/local/cuda/include/sm_12_atomic_functions.h"
+	.file	23	"/usr/local/cuda/include/sm_13_double_functions.h"
+	.file	24	"/usr/local/cuda/include/sm_20_atomic_functions.h"
+	.file	25	"/usr/local/cuda/include/sm_20_intrinsics.h"
+	.file	26	"/usr/local/cuda/include/surface_functions.h"
+	.file	27	"/usr/local/cuda/include/texture_fetch_functions.h"
+	.file	28	"/usr/local/cuda/include/math_functions_dbl_ptx3.h"
+
+
+	.entry _Z12kernel_dualpPfS_S_S_fffj (
+		.param .u64 __cudaparm__Z12kernel_dualpPfS_S_S_fffj_px,
+		.param .u64 __cudaparm__Z12kernel_dualpPfS_S_S_fffj_py,
+		.param .u64 __cudaparm__Z12kernel_dualpPfS_S_S_fffj_ux_,
+		.param .u64 __cudaparm__Z12kernel_dualpPfS_S_S_fffj_uy_,
+		.param .f32 __cudaparm__Z12kernel_dualpPfS_S_S_fffj_epsilon_u,
+		.param .f32 __cudaparm__Z12kernel_dualpPfS_S_S_fffj_sigma,
+		.param .f32 __cudaparm__Z12kernel_dualpPfS_S_S_fffj_lambda,
+		.param .u32 __cudaparm__Z12kernel_dualpPfS_S_S_fffj_stride)
+	{
+	.reg .u32 %r<15>;
+	.reg .u64 %rd<12>;
+	.reg .f32 %f<27>;
+	.reg .pred %p<3>;
+	.loc	16	16	0
+$LDWbegin__Z12kernel_dualpPfS_S_S_fffj:
+	.loc	16	27	0
+	mov.u32 	%r1, %ctaid.x;
+	mov.u32 	%r2, %ntid.x;
+	mul.lo.u32 	%r3, %r1, %r2;
+	mov.u32 	%r4, %ctaid.y;
+	mov.u32 	%r5, %ntid.y;
+	mul.lo.u32 	%r6, %r4, %r5;
+	mov.u32 	%r7, %tid.x;
+	add.u32 	%r8, %r7, %r3;
+	mov.u32 	%r9, %tid.y;
+	add.u32 	%r10, %r9, %r6;
+	ld.param.u32 	%r11, [__cudaparm__Z12kernel_dualpPfS_S_S_fffj_stride];
+	mul.lo.u32 	%r12, %r11, %r10;
+	add.u32 	%r13, %r8, %r12;
+	cvt.u64.u32 	%rd1, %r13;
+	mul.wide.u32 	%rd2, %r13, 4;
+	ld.param.u64 	%rd3, [__cudaparm__Z12kernel_dualpPfS_S_S_fffj_px];
+	add.u64 	%rd4, %rd3, %rd2;
+	ld.param.f32 	%f1, [__cudaparm__Z12kernel_dualpPfS_S_S_fffj_sigma];
+	ld.global.f32 	%f2, [%rd4+0];
+	ld.param.u64 	%rd5, [__cudaparm__Z12kernel_dualpPfS_S_S_fffj_ux_];
+	add.u64 	%rd6, %rd5, %rd2;
+	ld.global.f32 	%f3, [%rd6+0];
+	fma.rn.ftz.f32 	%f4, %f3, %f1, %f2;
+	ld.param.f32 	%f5, [__cudaparm__Z12kernel_dualpPfS_S_S_fffj_epsilon_u];
+	mul.ftz.f32 	%f6, %f5, %f1;
+	ld.param.f32 	%f7, [__cudaparm__Z12kernel_dualpPfS_S_S_fffj_lambda];
+	div.approx.ftz.f32 	%f8, %f6, %f7;
+	mov.f32 	%f9, 0f3f800000;     	// 1
+	add.ftz.f32 	%f10, %f8, %f9;
+	div.approx.ftz.f32 	%f11, %f4, %f10;
+	st.global.f32 	[%rd4+0], %f11;
+	.loc	16	28	0
+	ld.param.u64 	%rd7, [__cudaparm__Z12kernel_dualpPfS_S_S_fffj_py];
+	add.u64 	%rd8, %rd7, %rd2;
+	ld.global.f32 	%f12, [%rd8+0];
+	ld.param.u64 	%rd9, [__cudaparm__Z12kernel_dualpPfS_S_S_fffj_uy_];
+	add.u64 	%rd10, %rd9, %rd2;
+	ld.global.f32 	%f13, [%rd10+0];
+	fma.rn.ftz.f32 	%f14, %f13, %f1, %f12;
+	div.approx.ftz.f32 	%f15, %f14, %f10;
+	st.global.f32 	[%rd8+0], %f15;
+	.loc	16	30	0
+	ld.global.f32 	%f16, [%rd4+0];
+	.loc	16	35	0
+	mul.ftz.f32 	%f17, %f15, %f15;
+	fma.rn.ftz.f32 	%f18, %f16, %f16, %f17;
+	sqrt.approx.ftz.f32 	%f19, %f18;
+	div.approx.ftz.f32 	%f20, %f19, %f7;
+	mov.f32 	%f21, 0f3f800000;    	// 1
+	setp.lt.ftz.f32 	%p1, %f20, %f21;
+	@!%p1 bra 	$Lt_0_1282;
+	mov.f32 	%f22, 0f3f800000;    	// 1
+	bra.uni 	$Lt_0_1026;
+$Lt_0_1282:
+	mov.f32 	%f22, %f20;
+$Lt_0_1026:
+	.loc	16	37	0
+	div.approx.ftz.f32 	%f23, %f16, %f22;
+	st.global.f32 	[%rd4+0], %f23;
+	.loc	16	38	0
+	ld.global.f32 	%f24, [%rd8+0];
+	div.approx.ftz.f32 	%f25, %f24, %f22;
+	st.global.f32 	[%rd8+0], %f25;
+	.loc	16	41	0
+	exit;
+$LDWend__Z12kernel_dualpPfS_S_S_fffj:
+	} // _Z12kernel_dualpPfS_S_S_fffj
+
