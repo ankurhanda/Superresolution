@@ -38,17 +38,23 @@ using namespace CVD;
 
 
 
-//extern "C" void launch_kernel(float *var, unsigned int stride, unsigned int mesh_width, unsigned int mesh_height);
-extern "C" void launch_kernel_update_u(float *px, float *py, float *u, float *u_, float* g, unsigned int stride,
-                                       unsigned int mesh_width, unsigned int mesh_height, float tau, float lambda);
 
-extern "C" void launch_kernel_dual_variable_p(float *px, float *py, float* ux_, float *uy_, float sigma, unsigned int stride,
-                                              unsigned int mesh_width, unsigned int mesh_height);
+extern "C" void launch_kernel_primal_u(float *px, float *py, float* u_, float *u, float epsilon_u, float tau, float xisqr, float *WiT_BiT_DiT_qi,
+                                       unsigned int stride, unsigned int width_up, unsigned int height_up, int N_imgs);
 
-extern "C" void launch_kernel_derivative_u(float* ux, float *uy, float* u_, unsigned int stride, unsigned int mesh_width, unsigned int mesh_height);
+extern "C" void launch_kernel_q_SubtractDBWiu_fAdd_yAndReproject(float *result, int resultStride,
+                                                                 float *d_DBWiu,int DBWiuStride,
+                                                                 float *d_fi,   int imgStride,
+                                                                 float sigma_q,float xisqr,float epsilon_d,
+                                                                 int width_down, int height_down);
 
-//extern "C" void launch_kernel(int *d_Darray, int size);
+extern "C" void launch_kernel_dual_variable_p(float *px, float *py, float* ux_, float *uy_, float epsilon_u, float sigma, float lambda,
+                                              unsigned int stride, unsigned int mesh_width, unsigned int mesh_height);
 
+extern "C" void launch_kernel_blur(float *out, int outStride, float *in, int inStride, float* blur_kernel, int blurWidth, int width, int height);
+
+extern "C" void launch_kernel_Mult_Wi_u(float *out, int outStride, float *d_u_, int u_Stride, float *horizontal_flow, float* vertical_flow, int velStride,
+                                         int imgNo, int width, int height);
 
 
 int width_window = 512;
@@ -528,15 +534,7 @@ int main( int argc, char* argv[] )
     //can avoid this by using 2D malloc I think!
 //    N_imgs = 700;
 
-    float *d_dual_q;
-    size_t d_dual_q_pitch;
-    cutilSafeCall(cudaMallocPitch(&d_dual_q,&d_dual_q_pitch,(size_have)*sizeof(float),N_imgs));
-    cutilSafeCall(cudaMemset2D(d_dual_q,d_dual_q_pitch,0,(size_have)*sizeof(float),N_imgs));
 
-    float *d_dual_save_qT;
-    size_t d_dual_save_qT_pitch;
-    cutilSafeCall(cudaMallocPitch(&d_dual_save_qT,&d_dual_save_qT_pitch,(size_wanted)*sizeof(float),N_imgs));
-    cutilSafeCall(cudaMemset2D(d_dual_save_qT,d_dual_save_qT_pitch,0,(size_wanted)*sizeof(float),N_imgs));
 
 
     cout<<"everything looks okay!"<<endl;
@@ -763,9 +761,7 @@ int main( int argc, char* argv[] )
 
 
 
-    float *d_ydcopyqi;
-    float *d_DTqi_copy;
-    float *d_BTDTqi;
+
 
 
     int output_vector_size = size_have;
@@ -791,8 +787,6 @@ int main( int argc, char* argv[] )
 
     cutilSafeCall(cudaMalloc((void**)&d_A_copy, (size_have)*sizeof(float)*size_wanted));
     cutilSafeCall(cudaMalloc((void**)&d_img, sizeof(float)*size_wanted));
-    cutilSafeCall(cudaMalloc((void**)&d_ydcopyqi, (size_have)*sizeof(float)));
-    cutilSafeCall(cudaMalloc((void**)&d_DTqi_copy, (size_wanted)*sizeof(float)));
 
 
 
@@ -919,6 +913,7 @@ int main( int argc, char* argv[] )
 
 
     size_t upImageFloatPitch;
+    size_t downImageFloatPitch;
 
     float *d_px;
     float *d_py;
@@ -929,16 +924,40 @@ int main( int argc, char* argv[] )
     float *d_u_;
     float *d_u;
 
-    cutilSafeCall(cudaMallocPitch(&d_px,&upImageFloatPitch,sizeof(float)*N_cols_upimg,N_rows_low_img));
-    cutilSafeCall(cudaMallocPitch(&d_py,&upImageFloatPitch,sizeof(float)*N_cols_upimg,N_rows_low_img));
+    float *d_ydcopyqi;
+    float *d_Wiu_;
+    float *d_DTqi_copy;
+    float *d_BTDTqi;
+    float *d_blur_result;
+    float *d_res;
 
-    cutilSafeCall(cudaMallocPitch(&d_ux_,&upImageFloatPitch,sizeof(float)*N_cols_upimg,N_rows_low_img));
-    cutilSafeCall(cudaMallocPitch(&d_uy_,&upImageFloatPitch,sizeof(float)*N_cols_upimg,N_rows_low_img));
+    float *d_qi;
 
-    cutilSafeCall(cudaMallocPitch(&d_u_,&upImageFloatPitch,sizeof(float)*N_cols_upimg,N_rows_low_img));
-    cutilSafeCall(cudaMallocPitch(&d_u,&upImageFloatPitch,sizeof(float)*N_cols_upimg,N_rows_low_img));
+    cutilSafeCall(cudaMallocPitch(&d_px,&upImageFloatPitch,sizeof(float)*N_cols_upimg,N_rows_upimg));
+    cutilSafeCall(cudaMallocPitch(&d_py,&upImageFloatPitch,sizeof(float)*N_cols_upimg,N_rows_upimg));
+
+    cutilSafeCall(cudaMallocPitch(&d_ux_,&upImageFloatPitch,sizeof(float)*N_cols_upimg,N_rows_upimg));
+    cutilSafeCall(cudaMallocPitch(&d_uy_,&upImageFloatPitch,sizeof(float)*N_cols_upimg,N_rows_upimg));
+
+    cutilSafeCall(cudaMallocPitch(&d_u_,&upImageFloatPitch,sizeof(float)*N_cols_upimg,N_rows_upimg));
+    cutilSafeCall(cudaMallocPitch(&d_u,&upImageFloatPitch,sizeof(float)*N_cols_upimg,N_rows_upimg));
+
+
+    cutilSafeCall(cudaMallocPitch(&d_ydcopyqi,&downImageFloatPitch,sizeof(float)*N_cols_low_img,N_rows_low_img));
+
+
+    cutilSafeCall(cudaMallocPitch(&d_DTqi_copy,&upImageFloatPitch,sizeof(float)*N_cols_upimg,N_rows_upimg));
+    cutilSafeCall(cudaMallocPitch(&d_blur_result,&upImageFloatPitch,sizeof(float)*N_cols_upimg,N_rows_upimg));
+    cutilSafeCall(cudaMallocPitch(&d_BTDTqi,&upImageFloatPitch,sizeof(float)*N_cols_upimg,N_rows_upimg));
+    cutilSafeCall(cudaMallocPitch(&d_Wiu_,&upImageFloatPitch,sizeof(float)*N_cols_low_img,N_rows_low_img));
+
+    cutilSafeCall(cudaMallocPitch(&d_res,&downImageFloatPitch,sizeof(float)*N_cols_low_img,N_rows_low_img));
+
+
 
     int upImageStrideFloat = upImageFloatPitch/sizeof(float);
+    int downImageStrideFloat = downImageFloatPitch/sizeof(float);
+
     int velStrideFloat   = velFloatPitch/sizeof(float);
 
     int width_up   = N_cols_upimg;
@@ -958,12 +977,12 @@ int main( int argc, char* argv[] )
 //            cudaMemcpy(d_ydcopyqi,qi+(size_have)*i,sizeof(float)*size_have,cudaMemcpyDeviceToDevice);
 
             //do W_iu
-            launch_kernel_Mult_Wi_u(d_ydcopyqi, d_ydcopyqiStride, d_u_, upImageStrideFloat, d_horizontal_velocity_all+size_wanted*i, d_vertical_velocity_all+size_wanted*i,
+            launch_kernel_Mult_Wi_u(d_Wiu_, upImageStrideFloat, d_u_, upImageStrideFloat, d_horizontal_velocity_all+size_wanted*i, d_vertical_velocity_all+size_wanted*i,
                                     velStrideFloat, i, width_up, height_up);
 
             //do B*(W_iu)
             //float *out, int outStride, float *in, int inStride, float* blur_kernel, int blurWidth, int width, int height
-            launch_kernel_blur(d_blur_result,imageStrideFloat, d_ydcopyqi, upImageStrideFloat, blur_kernel, blurWidth, width_up, height_up);
+            launch_kernel_blur(d_blur_result,upImageStrideFloat, d_ydcopyqi, upImageStrideFloat, blur_kernel, blurWidth, width_up, height_up);
 
             //do D*(B*(W_iu))
             cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_have, size_wanted, 1.0, descr, d_DMatvalPtr, d_DMatrowPtr, d_DMatcolPtr, d_blur_result, 0.0, d_res);
