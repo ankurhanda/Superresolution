@@ -21,7 +21,7 @@ __global__ void kernel_q_SubtractDBWiu_fAdd_yAndReproject(float *result, int res
 
 
     //q^{n+1} = \frac{q^n + \sigma \xi^{2} (DBWu_ - f)}{ 1 + epsilon_d*sigma_q/xisqr}
-    //q^{n+1} =  max(-1.0f, min(1.0f, q^{n+1}))
+    // q^{n+1} =  max(-xisqr, min(xisqr, q^{n+1}))
 
     unsigned int x = blockIdx.x*blockDim.x + threadIdx.x;
     unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
@@ -33,7 +33,7 @@ __global__ void kernel_q_SubtractDBWiu_fAdd_yAndReproject(float *result, int res
        float result_val = result[y*resultStride+x] + sigma_q*xisqr*(d_DBWiu[y*DBWiuStride+x]-d_fi[y*imgStride+x]);
        result_val = result_val/(1 + sigma_q*epsilon_d/xisqr);
 
-       result_val = max(-xisqr*1.0f, min(xisqr, result_val)); // clamped reprojection
+       result_val = max(-xisqr*1.0f, min(xisqr*1.0f, result_val)); // clamped reprojection
 
        result[y*resultStride+x] = result_val;
     }
