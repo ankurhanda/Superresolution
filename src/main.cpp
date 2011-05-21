@@ -578,17 +578,78 @@ int main( int argc, char* argv[] )
 //    input_image_data_low = input_image_low.data();
 
 
+    float sigma_kernel = 0.25* ( sqrt(scale*scale-1) );
+
+    int kernel_size = (int)ceil(3*(0.25* ( sqrt(scale*scale-1) )));
+
+    if ( kernel_size % 2 == 0 )
+    {
+        kernel_size = kernel_size+1;
+    }
+
+    int kernelhalfwidth = kernel_size/2;
+
+    cout << "kernel_size = " << kernel_size << endl;
+    cout << "blurWidth = " << blurWidth << endl;
+
+    float blur_kernel_h[kernel_size*kernel_size];
+
+    float* blur_kernel_d;
+
+    float sum_kernel_values = 0;
+
+    cout << "sigma_kernel = " << sigma_kernel << endl;
+
+    for(int i = 0 ; i < kernel_size; i++)
+    {
+        for(int j = 0 ; j < kernel_size; j++)
+        {
+            float val = (i-kernelhalfwidth)*(i-kernelhalfwidth) + (j-kernelhalfwidth)*(j-kernelhalfwidth);
+
+
+            cout << "val = " << val << endl;
+
+            val = val / (2*sigma_kernel*sigma_kernel);
+
+            blur_kernel_h[i*kernel_size+j] = exp(-val)/(2*M_PI*sigma_kernel*sigma_kernel);
+
+            sum_kernel_values += blur_kernel_h[i*kernel_size+j];
+
+        }
+    }
+
+    for(int i = 0 ; i < kernel_size ; i++)
+    {
+        for(int j = 0 ; j < kernel_size ; j++)
+        {
+            blur_kernel_h[i*kernel_size+j] = blur_kernel_h[i*kernel_size+j]/sum_kernel_values;
+            cout<< blur_kernel_h[i*kernel_size+j]<< " ";
+        }
+        cout<< endl;
+    }
+
 
 
     TooN::Matrix<>A(size_have,size_wanted);
     A = TooN::Zeros(size_have,size_wanted);
 
+
+    TooN::Matrix<>B(size_wanted,size_wanted);
+    B = TooN::Zeros(size_wanted,size_wanted);
+
+
+
     std::map<int,float>matindex_matval;
     std::map<int,float>matindex_matvalT;
 
+    std::map<int,float>Blurmatindex_matval;
+    std::map<int,float>Blurmatindex_matvalT;
 
-//    //DMatvalPtr, DMatrowPtr, DMatcolPtr,
+
     buildDMatrixLebesgueMeasure(size_have,size_wanted, N_rows_upimg, N_cols_upimg, scale, A, matindex_matval,matindex_matvalT);
+    buildBlurMatrixFromKernel(size_wanted, N_rows_upimg, N_cols_upimg, blur_kernel_h, kernel_size,B, Blurmatindex_matval,Blurmatindex_matvalT);
+
+
 
     int NnzDMat = (int)matindex_matval.size();
     int NnzDMatT = (int)matindex_matvalT.size();
@@ -602,9 +663,6 @@ int main( int argc, char* argv[] )
 
     int *DMatrowPtr = new int[size_have+1];
     int *DMatrowPtrT = new int[size_wanted+1];
-
-
-
 
 
     int index = 0, prev_row = -1;
@@ -686,26 +744,87 @@ int main( int argc, char* argv[] )
     }
     cout << endl;
 
-    cout << "DMatcolPtr" << endl;
-//    cout << "index = " << index << endl;
-//    cout << "NnzDMat = " << NnzDMat << endl;
-//    for(int i = 0 ; i < NnzDMat ; i++ )
-//    {
-//        cout << DMatcolPtr[i] << " ";
-//    }
-//    cout << endl;
 
 
-////    cout <<"A Matrix" << endl;
-////    cout << A << endl;
 
 
     cout << "DMatrowPtr = " << endl;
-//    for(int i = 0; i < size_have+1 ; i++)
-//    {
-//        cout << DMatrowPtr[i] << " ";
-//    }
-//    cout << endl;
+
+
+
+
+    //############### ALL RELATED TO BLUR MATRIX #########################
+    int NnzBlurMat  = (int)Blurmatindex_matval.size();
+    int NnzBlurMatT = (int)Blurmatindex_matvalT.size();
+
+    float *BMatvalPtr = new float[NnzBlurMat];
+    float *BMatvalPtrT = new float[NnzBlurMatT];
+
+    int *BMatcolPtr = new int[NnzBlurMat];
+    int *BMatcolPtrT = new int[NnzBlurMatT];
+
+    int *BMatrowPtr = new int[size_wanted+1];
+    int *BMatrowPtrT = new int[size_wanted+1];
+
+
+
+    index = 0; prev_row = -1;
+
+    std::map<int,float>::iterator it;
+    cout << "Map begins " << endl;
+    cout << "NnzBlurMat   = "<<NnzBlurMat << endl;
+    cout << "NnzBlurMatT   = "<<NnzBlurMatT << endl;
+
+    for(int i = 0 ; i < size_wanted ; i++)
+    {
+        BMatrowPtr[i] = 0;
+    }
+    BMatrowPtr[size_have] = NnzBlurMat;
+
+    for(int i = 0 ; i < size_wanted ; i++)
+    {
+        BMatrowPtrT[i] = 0;
+    }
+    BMatrowPtrT[size_wanted] = NnzBlurMatT;
+
+
+    cout << "Transpose data begins" << endl;
+    index = 0; prev_row = -1;
+
+    for(it = Blurmatindex_matvalT.begin(); it != Blurmatindex_matvalT.end(); it++ )
+    {
+        BMatcolPtrT[index] = (it->first)%size_wanted;
+        BMatvalPtrT[index]  = it->second;
+        int row = ((it->first) - (it->first)%size_wanted)/size_wanted;
+
+        if ( BMatrowPtrT[row] == 0 && prev_row != row)
+        {
+            BMatrowPtrT[row] = index;
+            prev_row = row;
+        }
+
+        index++;
+    }
+
+    index = 0; prev_row=-1;
+    for(it = matindex_matval.begin(); it != matindex_matval.end(); it++ )
+    {
+        BMatvalPtr[index] = (it->second);
+        BMatcolPtr[index] = (it->first)%size_wanted;
+
+        int row = ((it->first) - (it->first)%size_wanted)/size_wanted;
+
+        if ( BMatrowPtr[row] == 0 && prev_row != row)
+        {
+            BMatrowPtr[row] = index;
+            prev_row = row;
+        }
+
+        index++;
+    }
+    cout << endl;
+
+
 
 
     cout << "Going to initialise the sparse matrix thing!"<<endl;
@@ -735,7 +854,6 @@ int main( int argc, char* argv[] )
     cout<< "cu sparse initialised!"<<endl;
 
 
-////    size_t imagePitchFloat;
 
     float *d_horizontal_velocity_all;
     float *d_vertical_velocity_all;
@@ -997,55 +1115,7 @@ int main( int argc, char* argv[] )
     float sigma_q=0;
     float sigma_p=0;
 
-    float sigma_kernel = 0.25* ( sqrt(scale*scale-1) );
 
-    int kernel_size = (int)ceil(3*(0.25* ( sqrt(scale*scale-1) )));
-
-    if ( kernel_size % 2 == 0 )
-    {
-        kernel_size = kernel_size+1;
-    }
-
-    int blurWidth = kernel_size/2;
-
-    cout << "kernel_size = " << kernel_size << endl;
-    cout << "blurWidth = " << blurWidth << endl;
-
-    float blur_kernel_h[kernel_size*kernel_size];
-
-    float* blur_kernel_d;
-
-    float sum_kernel_values = 0;
-
-    cout << "sigma_kernel = " << sigma_kernel << endl;
-
-    for(int i = 0 ; i < kernel_size; i++)
-    {
-        for(int j = 0 ; j < kernel_size; j++)
-        {
-            float val = (i-blurWidth)*(i-blurWidth) + (j-blurWidth)*(j-blurWidth);
-
-
-            cout << "val = " << val << endl;
-
-            val = val / (2*sigma_kernel*sigma_kernel);
-
-            blur_kernel_h[i*kernel_size+j] = exp(-val)/(2*M_PI*sigma_kernel*sigma_kernel);
-
-            sum_kernel_values += blur_kernel_h[i*kernel_size+j];
-
-        }
-    }
-
-    for(int i = 0 ; i < kernel_size ; i++)
-    {
-        for(int j = 0 ; j < kernel_size ; j++)
-        {
-            blur_kernel_h[i*kernel_size+j] = blur_kernel_h[i*kernel_size+j]/sum_kernel_values;
-            cout<< blur_kernel_h[i*kernel_size+j]<< " ";
-        }
-        cout<< endl;
-    }
 
     cutilSafeCall(cudaMalloc((void**)&blur_kernel_d, (kernel_size)*sizeof(float)*kernel_size));
     cudaMemcpy(blur_kernel_d,blur_kernel_h,sizeof(float)*kernel_size*kernel_size,cudaMemcpyHostToDevice);
@@ -1071,7 +1141,7 @@ int main( int argc, char* argv[] )
                                     velStrideFloat, i, width_up, height_up);
 
             //do B*(W_iu)
-            launch_kernel_blur(d_blur_result,upImageStrideFloat, d_Wiu_, upImageStrideFloat, blur_kernel_d, blurWidth, width_up, height_up);
+            launch_kernel_blur(d_blur_result,upImageStrideFloat, d_Wiu_, upImageStrideFloat, blur_kernel_d, kernel_size, width_up, height_up);
 
             //do D*(B*(W_iu))
             cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_have, size_wanted, 1.0, descr, d_DMatvalPtr, d_DMatrowPtr, d_DMatcolPtr, d_blur_result, 0.0, d_res);
@@ -1094,7 +1164,7 @@ int main( int argc, char* argv[] )
             cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_have, size_wanted, 1.0, descr, d_DMatvalPtrT, d_DMatrowPtrT, d_DMatcolPtrT, d_ydcopyqi, 0.0, d_DTqi_copy);
 
             //do B^{T}*(D^{T}*yu);
-            launch_kernel_blur(d_BTDTqi, upImageStrideFloat, d_DTqi_copy, upImageStrideFloat,blur_kernel_d,blurWidth, width_up, height_up);
+            cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_wanted, 1.0, descr, d_BMatvalPtrT, d_BMatrowPtrT, d_BMatcolPtrT, d_DTqi_copy, 0.0, d_BTDTqi);
 
             //copy the contents to d_dual_save_BTDT_q
             cudaMemcpy(d_dual_save_BTDTq +(size_wanted)*i,d_BTDTqi,sizeof(float)*size_wanted,cudaMemcpyDeviceToDevice);

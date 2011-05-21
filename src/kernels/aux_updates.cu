@@ -70,6 +70,7 @@ __global__ void kernel_blur(float *out, int outStride, float *in, int inStride, 
 
     float val = 0;
 
+    float sum_kernel = 0;
 
 
     for(int i = -blurWidth/2 ; i <= blurWidth/2 ; i++ )
@@ -79,11 +80,12 @@ __global__ void kernel_blur(float *out, int outStride, float *in, int inStride, 
             if ( y+i < height && x+j < width )
             {
                 val += blur_kernel[i*blurWidth+j]*in[(y+i)*inStride+(x+j)];
+                sum_kernel += blur_kernel[i*blurWidth+j];
             }
         }
     }
 
-    out[y*outStride+x] = val;
+    out[y*outStride+x] = (val/sum_kernel);
 
 }
 
