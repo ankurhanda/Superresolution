@@ -343,15 +343,24 @@ void buildWMatrixBilinearInterpolation(int N_imgs, int size_wanted, int N_rows_u
 }
 
 
-void buildBlurMatrixFromKernel(int size_wanted, int N_rows_upimg, int N_cols_upimg, float* blurKernel, int blurWidth, TooN::Matrix<>& B, std::map<int, float>& Blurmatindex_matval,
+void buildBlurMatrixFromKernel(int size_wanted, int N_rows_upimg, int N_cols_upimg, float* blurKernel, int blurWidth, /*TooN::Matrix<>& B,*/ std::map<int, float>& Blurmatindex_matval,
                                std::map<int, float>& Blurmatindex_matvalT)
 {
+
+
+
+    cout << "Entering into the function!" << endl;
+    cout << "blurWidth = "<< blurWidth << endl;
+    cout << "N_rows_upimg " << N_rows_upimg << endl;
+    cout << "N_cols_upimg " << N_cols_upimg << endl;
 
     for (int i = 0 ; i < N_rows_upimg; i++ )
     {
         for(int j = 0 ; j < N_cols_upimg ; j++ )
         {
 
+
+            float sum_kernel = 0;
 
             for(int y = -blurWidth/2 ; y <= blurWidth/2 ; y++ )
             {
@@ -365,22 +374,27 @@ void buildBlurMatrixFromKernel(int size_wanted, int N_rows_upimg, int N_cols_upi
             }
 
 
+
             for(int y = -blurWidth/2 ; y <= blurWidth/2 ; y++ )
             {
                 for(int x = -blurWidth/2 ; x <= blurWidth/2 ; x++)
                 {
                     if ( y+i >= 0 && y+i < N_rows_upimg && x+j >= 0 && x+j < N_cols_upimg )
                     {
-                        int index  = (y+i)*size_wanted + (x+j);
-                        int indexT = (x+j)*size_wanted + (y+i);
-                        int row    = i*size_wanted + j;
+
+                        int row    = i*N_cols_upimg + j;
+                        int col    = (y+i)*N_cols_upimg + (x+j);
+
+                        int index  = (row)*size_wanted + col;
+                        int indexT  = (col)*size_wanted + row;
+
 
                         float val = blurKernel[(y+blurWidth/2)*blurWidth + x+blurWidth/2]/sum_kernel;
 
                         Blurmatindex_matval[index]  = val;
                         Blurmatindex_matvalT[indexT] = val;
 
-                        B(row,index) = val;
+//                        B(row,index) = val;
                     }
                 }
             }
@@ -388,11 +402,13 @@ void buildBlurMatrixFromKernel(int size_wanted, int N_rows_upimg, int N_cols_upi
         }
     }
 
+    cout << "Finished with the loop!" << endl;
+
 }
 
 
 void buildDMatrixLebesgueMeasure(int size_have, int size_wanted,int N_rows_upimg, int N_cols_upimg, /*float *DMatvalPtr, int *DMatrowPtr, int *DMatcolPtr,*/
-                                 float scale_factor, TooN::Matrix<>&A, std::map<int, float>& matindex_matval, std::map<int, float>&matindex_matvalT )
+                                 float scale_factor, /*TooN::Matrix<>&A,*/ std::map<int, float>& matindex_matval, std::map<int, float>&matindex_matvalT )
 {
 
 
@@ -505,7 +521,7 @@ void buildDMatrixLebesgueMeasure(int size_have, int size_wanted,int N_rows_upimg
                         {
                             static float val = 1;
 
-                            A(row_index,col_number)= weightMat(row_mat,col_mat);
+//                            A(row_index,col_number)= weightMat(row_mat,col_mat);
 
 //                            int idx = (row_index)*size_wanted + (col_number);
 //                            int idx_T = (row_index) + (col_number)*size_have;

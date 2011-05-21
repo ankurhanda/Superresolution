@@ -28,10 +28,10 @@ int read_horizontal_vertical_flow(float *u, float *v, int img_no, int N_rows_upi
 //void buildWMatrixBilinearInterpolation(int N_imgs, int N_rows_upimg, int N_cols_upimg, float** valPtr, int** rowPtr, int** colPtr);
 void buildWMatrixBilinearInterpolation(int N_imgs, int size_wanted, int N_rows_upimg, int N_cols_upimg, std::vector< std::map<int, float> >& h_vectorofMaps);
 void buildDMatrixLebesgueMeasure(int size_have, int size_wanted,int N_rows_upimg, int N_cols_upimg, /*float *DMatvalPtr, int *DMatrowPtr, int *DMatcolPtr,*/
-                                 float scale_factor, TooN::Matrix<>&A, std::map<int, float>& matindex_matval, std::map<int, float>&matindex_matvalT );
+                                 float scale_factor, /*TooN::Matrix<>&A,*/ std::map<int, float>& matindex_matval, std::map<int, float>&matindex_matvalT );
 
-void buildBlurMatrixFromKernel(int size_wanted, int N_rows_upimg, int N_cols_upimg, float* blurKernel, int blurWidth, TooN::Matrix<>& B, std::map<int, float>& Blurmatindex_matval,
-                               std::map<int, float>& Blurmatindex_matvalT);
+void buildBlurMatrixFromKernel(int size_wanted, int N_rows_upimg, int N_cols_upimg, float* blurKernel, int blurWidth, /*TooN::Matrix<>& B,*/ std::map<int, float>& Blurmatindex_matval,
+                           std::map<int, float>& Blurmatindex_matvalT);
 
 
 #endif
