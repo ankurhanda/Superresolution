@@ -648,19 +648,19 @@ int main( int argc, char* argv[] )
         index++;
     }
 
-    cout <<"DMatrowptrT"<<endl;
-    for(int i = 0; i < size_wanted+1 ; i++)
-    {
-        cout << DMatrowPtrT[i] << " ";
-    }
-    cout << endl;
+//    cout <<"DMatrowptrT"<<endl;
+//    for(int i = 0; i < size_wanted+1 ; i++)
+//    {
+//        cout << DMatrowPtrT[i] << " ";
+//    }
+//    cout << endl;
 
-    cout <<"DMatcolptrT"<<endl;
-    for(int i = 0; i < NnzDMatT ; i++)
-    {
-        cout << DMatcolPtrT[i] << " ";
-    }
-    cout << endl;
+//    cout <<"DMatcolptrT"<<endl;
+//    for(int i = 0; i < NnzDMatT ; i++)
+//    {
+//        cout << DMatcolPtrT[i] << " ";
+//    }
+//    cout << endl;
 
 
 ////    cout << "Transpose Data ends " << endl;
@@ -689,11 +689,11 @@ int main( int argc, char* argv[] )
     cout << "DMatcolPtr" << endl;
 //    cout << "index = " << index << endl;
 //    cout << "NnzDMat = " << NnzDMat << endl;
-    for(int i = 0 ; i < NnzDMat ; i++ )
-    {
-        cout << DMatcolPtr[i] << " ";
-    }
-    cout << endl;
+//    for(int i = 0 ; i < NnzDMat ; i++ )
+//    {
+//        cout << DMatcolPtr[i] << " ";
+//    }
+//    cout << endl;
 
 
 ////    cout <<"A Matrix" << endl;
@@ -701,11 +701,11 @@ int main( int argc, char* argv[] )
 
 
     cout << "DMatrowPtr = " << endl;
-    for(int i = 0; i < size_have+1 ; i++)
-    {
-        cout << DMatrowPtr[i] << " ";
-    }
-    cout << endl;
+//    for(int i = 0; i < size_have+1 ; i++)
+//    {
+//        cout << DMatrowPtr[i] << " ";
+//    }
+//    cout << endl;
 
 
     cout << "Going to initialise the sparse matrix thing!"<<endl;
@@ -870,36 +870,36 @@ int main( int argc, char* argv[] )
     cudaMemcpy(h_Ax,d_Ax,sizeof(float)*output_vector_size,cudaMemcpyDeviceToHost);
 
     cout<< endl<<"cusparse multiplication result!"<<endl;
-    for(int i = 0 ; i < output_vector_size ;i++)
-    {
-        cout<<h_Ax[i]<<" ";
-    }
-    cout<<endl;
+//    for(int i = 0 ; i < output_vector_size ;i++)
+//    {
+//        cout<<h_Ax[i]<<" ";
+//    }
+//    cout<<endl;
 
     cudaMemcpy(h_AxT,d_AxT,sizeof(float)*size_wanted,cudaMemcpyDeviceToHost);
 
     cout<< endl<<"cusparse multiplication transpose result!"<<endl;
-    for(int i = 0 ; i < size_wanted ;i++)
-    {
-        cout<<h_AxT[i]<<" ";
-    }
-    cout<<endl;
+//    for(int i = 0 ; i < size_wanted ;i++)
+//    {
+//        cout<<h_AxT[i]<<" ";
+//    }
+//    cout<<endl;
 
 
 
     cout << "N_rows_low_img = " << N_rows_low_img << endl;
 
-    CVD::Image<CVD::byte> dsampledImage = CVD::Image<CVD::byte>(ImageRef(N_cols_low_img,N_rows_low_img));
+//    CVD::Image<CVD::byte> dsampledImage = CVD::Image<CVD::byte>(ImageRef(N_cols_low_img,N_rows_low_img));
 
-    for(int row = 0 ; row < N_rows_low_img ; row++)
-    {
-        for(int col = 0 ; col < N_cols_low_img ; col++)
-        {
-            dsampledImage[ImageRef(col,row)] = (unsigned char)(h_Ax[row*N_cols_low_img+col]*255.0f);
-        }
-    }
+//    for(int row = 0 ; row < N_rows_low_img ; row++)
+//    {
+//        for(int col = 0 ; col < N_cols_low_img ; col++)
+//        {
+//            dsampledImage[ImageRef(col,row)] = (unsigned char)(h_Ax[row*N_cols_low_img+col]*255.0f);
+//        }
+//    }
 
-    img_save(dsampledImage,"dsampledImage.png");
+//    img_save(dsampledImage,"dsampledImage.png");
 
 
 // ######################### Uncomment from here #########################
@@ -965,9 +965,7 @@ int main( int argc, char* argv[] )
     // All images stacked up in this vector in lexicographical order.
     cutilSafeCall(cudaMallocPitch(&d_fi,&imgVectorsFloatPitch,sizeof(float)*size_have,N_imgs));
 
-
-
-//    cutilSafeCall(cudaMalloc((void**)&d_dual_save_WTBTDTq, (size_wanted)*sizeof(float)*N_imgs));
+    // cutilSafeCall(cudaMalloc((void**)&d_dual_save_WTBTDTq, (size_wanted)*sizeof(float)*N_imgs));
     cutilSafeCall(cudaMallocPitch(&d_dual_save_WTBTDTq,&WTBTDTqFloatPitch,sizeof(float)*size_wanted,N_imgs));
 
 
@@ -1010,21 +1008,43 @@ int main( int argc, char* argv[] )
 
     int blurWidth = kernel_size/2;
 
+    cout << "kernel_size = " << kernel_size << endl;
+    cout << "blurWidth = " << blurWidth << endl;
 
     float blur_kernel_h[kernel_size*kernel_size];
 
     float* blur_kernel_d;
 
+    float sum_kernel_values = 0;
+
+    cout << "sigma_kernel = " << sigma_kernel << endl;
 
     for(int i = 0 ; i < kernel_size; i++)
     {
         for(int j = 0 ; j < kernel_size; j++)
         {
-            float val = ((i-blurWidth)*(i-blurWidth) + (j-blurWidth)*(j-blurWidth))/(2*sigma_kernel*sigma_kernel);
+            float val = (i-blurWidth)*(i-blurWidth) + (j-blurWidth)*(j-blurWidth);
 
-            blur_kernel_h[i*blurWidth+j] = exp(-val)/(2*M_PI*sigma_kernel*sigma_kernel);
+
+            cout << "val = " << val << endl;
+
+            val = val / (2*sigma_kernel*sigma_kernel);
+
+            blur_kernel_h[i*kernel_size+j] = exp(-val)/(2*M_PI*sigma_kernel*sigma_kernel);
+
+            sum_kernel_values += blur_kernel_h[i*kernel_size+j];
 
         }
+    }
+
+    for(int i = 0 ; i < kernel_size ; i++)
+    {
+        for(int j = 0 ; j < kernel_size ; j++)
+        {
+            blur_kernel_h[i*kernel_size+j] = blur_kernel_h[i*kernel_size+j]/sum_kernel_values;
+            cout<< blur_kernel_h[i*kernel_size+j]<< " ";
+        }
+        cout<< endl;
     }
 
     cutilSafeCall(cudaMalloc((void**)&blur_kernel_d, (kernel_size)*sizeof(float)*kernel_size));
