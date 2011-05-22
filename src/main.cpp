@@ -535,24 +535,8 @@ int main( int argc, char* argv[] )
     size_t WMatrow_pitchT;
     cutilSafeCall(cudaMallocPitch(&d_WMatrowPtrT,&WMatrow_pitchT,(size_wanted+1)*sizeof(int),N_imgs));
 
-
-
-
-
    //###########################################################################################################
 
-
-
-
-
-
-
-
-//    float *input_image_data_low = new float[size_have];
-//    input_image_data_low = input_image_low.data();
-
-
-//    scale = 8;
     float sigma_kernel = 0.25* ( sqrt(scale*scale-1) );
 
     int kernel_size = (int)ceil(3*(0.25* ( sqrt(scale*scale-1) )));
@@ -661,24 +645,6 @@ int main( int argc, char* argv[] )
 
         index++;
     }
-
-//    cout <<"DMatrowptrT"<<endl;
-//    for(int i = 0; i < size_wanted+1 ; i++)
-//    {
-//        cout << DMatrowPtrT[i] << " ";
-//    }
-//    cout << endl;
-
-//    cout <<"DMatcolptrT"<<endl;
-//    for(int i = 0; i < NnzDMatT ; i++)
-//    {
-//        cout << DMatcolPtrT[i] << " ";
-//    }
-//    cout << endl;
-
-
-////    cout << "Transpose Data ends " << endl;
-
 
 
     index = 0; prev_row=-1;
@@ -822,6 +788,19 @@ int main( int argc, char* argv[] )
     cusparseSetMatIndexBase(descr,CUSPARSE_INDEX_BASE_ZERO);
 
     cout<< "cu sparse initialised!"<<endl;
+
+
+    float* d_cscWMatvalPtr;
+    float* d_cscWMatcolPtr;
+    float* d_cscWMatrowPtr;
+
+
+
+    // Remember this is csc so col and rows are swapped!
+    cutilSafeCall(cudaMalloc((void**)&d_cscWMatvalPtr, total_nonzeros*sizeof (float)));
+    cutilSafeCall(cudaMalloc((void**)&d_cscWMatrowPtr, (total_nonzeros)*sizeof(int)));
+    cutilSafeCall(cudaMalloc((void**)&d_cscWMatcolPtr, (size_wanted+1)*sizeof (int)));
+
 
 
     cusparseScsr2csc(handle,size_wanted*N_img, size_wanted, d_WMatvalPtr, d_WMatrowPtr, d_WMatcolPtr, d_cscWMatValPtr, 
