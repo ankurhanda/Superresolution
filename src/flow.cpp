@@ -385,13 +385,13 @@ void buildBlurMatrixFromKernel(int size_wanted, int N_rows_upimg, int N_cols_upi
                         int row    = i*N_cols_upimg + j;
                         int col    = (y+i)*N_cols_upimg + (x+j);
 
-                        int index  = (row)*size_wanted + col;
+                        int index   =  (row)*size_wanted + col;
                         int indexT  = (col)*size_wanted + row;
 
 
                         float val = blurKernel[(y+blurWidth/2)*blurWidth + x+blurWidth/2]/sum_kernel;
 
-                        Blurmatindex_matval[index]  = val;
+                        Blurmatindex_matval[index]   = val;
                         Blurmatindex_matvalT[indexT] = val;
 
 //                        B(row,index) = val;
@@ -408,7 +408,7 @@ void buildBlurMatrixFromKernel(int size_wanted, int N_rows_upimg, int N_cols_upi
 
 
 void buildDMatrixLebesgueMeasure(int size_have, int size_wanted,int N_rows_upimg, int N_cols_upimg, /*float *DMatvalPtr, int *DMatrowPtr, int *DMatcolPtr,*/
-                                 float scale_factor, /*TooN::Matrix<>&A,*/ std::map<int, float>& matindex_matval, std::map<int, float>&matindex_matvalT )
+                                 float scale_factor, std::map<int, float>& matindex_matval, std::map<int, float>&matindex_matvalT )
 {
 
 
@@ -417,7 +417,6 @@ void buildDMatrixLebesgueMeasure(int size_have, int size_wanted,int N_rows_upimg
         float prev_row = 0;
  	float prev_col = 0;
 
-        //DMatrowPtr[0] = 0;
  	float left_over_row = 0;
 	float left_over_col = 0;
 
