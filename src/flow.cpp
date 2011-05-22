@@ -244,21 +244,21 @@ void buildWMatrixBilinearInterpolation(int N_imgs, int size_wanted, int N_rows_u
     {
 
 
-//        cout << "Reading the flow values" << endl;
-//        read_horizontal_vertical_flow(u,v,img_no, N_rows_upimg,N_cols_upimg);
+        cout << "Reading the flow values" << endl;
+        read_horizontal_vertical_flow(u,v,img_no, N_rows_upimg,N_cols_upimg);
 
-//        ImageRef size_upimg(N_cols_upimg,N_rows_upimg);
-//        CVD::Image< Rgb<byte> > colim(size_upimg);
-//        float maxmotion = 10;
+        ImageRef size_upimg(N_cols_upimg,N_rows_upimg);
+        CVD::Image< Rgb<byte> > colim(size_upimg);
+        float maxmotion = 10;
 
-//        MotionToColor(u,v,N_rows_upimg,N_cols_upimg,colim,maxmotion);
+        MotionToColor(u,v,N_rows_upimg,N_cols_upimg,colim,maxmotion);
 
 
-//        char fname[30];
-//        sprintf(fname,"flow_image%03d.png",img_no-1);
-//        std::string str_file = std::string(fname);
+        char fname[30];
+        sprintf(fname,"flow_image%03d.png",img_no-1);
+        std::string str_file = std::string(fname);
 
-//        img_save(colim,str_file);
+        img_save(colim,str_file);
 
 
         int index = 0;
@@ -275,8 +275,8 @@ void buildWMatrixBilinearInterpolation(int N_imgs, int size_wanted, int N_rows_u
             for (int col = 0 ; col < N_cols_upimg ; col++)
             {
 
-                float horizontal_flow = ((float)(rand())/RAND_MAX)*10.0f; //u[col + row*N_cols_upimg];
-                float   vertical_flow = ((float)(rand())/RAND_MAX)*10.0f; //v[col + row*N_cols_upimg];
+                float horizontal_flow = /*((float)(rand())/RAND_MAX)*10.0f; */ u[col + row*N_cols_upimg];
+                float   vertical_flow = /*((float)(rand())/RAND_MAX)*10.0f; */v[col + row*N_cols_upimg];
 
                 float x_ = col*1.0f+horizontal_flow;
                 float y_ = row*1.0f+vertical_flow;

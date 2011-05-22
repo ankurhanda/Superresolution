@@ -778,8 +778,8 @@ int main( int argc, char* argv[] )
 
 
     float* d_cscWMatvalPtr;
-    float* d_cscWMatcolPtr;
-    float* d_cscWMatrowPtr;
+    int* d_cscWMatcolPtr;
+    int* d_cscWMatrowPtr;
 
 
 
@@ -789,11 +789,23 @@ int main( int argc, char* argv[] )
     cutilSafeCall(cudaMalloc((void**)&d_cscWMatcolPtr, (size_wanted+1)*sizeof (int)));
 
 
+    {
+        ScopedCuTimer cuTime("csr2csc conversion time");
+        cusparseScsr2csc(handle,size_wanted*N_imgs, size_wanted, d_csrWMatStackedval, d_csrWMatStackedrow, d_csrWMatStackedcol, d_cscWMatvalPtr,
+                     d_cscWMatrowPtr, d_cscWMatcolPtr, 1, CUSPARSE_INDEX_BASE_ZERO);
+    }
 
-//    cusparseScsr2csc(handle,size_wanted*N_img, size_wanted, d_WMatvalPtr, d_WMatrowPtr, d_WMatcolPtr, d_cscWMatValPtr,
-//		     d_cscWMatRowPtr, d_cscWMatColPtr, 1, CUSPARSE_INDEX_BASE_ZERO);
 
+//    {
+//        ScopedCuTimer cuTime("csr2csc conversion time");
+//        cusparseScsr2csc(handle, size_wanted, size_wanted*N_imgs, d_cscWMatvalPtr, d_cscWMatcolPtr, d_cscWMatrowPtr, d_csrWMatStackedval,
+//                     d_csrWMatStackedcol, d_csrWMatStackedrow, 1, CUSPARSE_INDEX_BASE_ZERO);
 
+//        if (status != CUSPARSE_STATUS_SUCCESS) {
+//            fprintf( stderr, "!!!! CSC2CSR Conversion error\n" );
+//            return EXIT_FAILURE;
+//        }
+//    }
 
 
 
@@ -834,6 +846,7 @@ int main( int argc, char* argv[] )
 
 
 
+//    cout << "NnzDmat = "<< NnzDMat << endl;
 
 
     int output_vector_size = size_have;
@@ -968,11 +981,6 @@ int main( int argc, char* argv[] )
 
     h_Ax          = (float*)malloc(sizeof(float)*size_have);
     h_AxT         = (float*)malloc(sizeof(float)*size_wanted);
-
-
-
-
-
 
 
     {
