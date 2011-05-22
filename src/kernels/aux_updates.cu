@@ -89,6 +89,22 @@ __global__ void kernel_blur(float *out, int outStride, float *in, int inStride, 
 
 }
 
+
+__global__ void kernel_subtract(float* d_fi, int imgVectorsStrideFloat, float* d_res_stacked, int qVectorsStrideFloat, int size)
+{
+
+    unsigned int x = blockIdx.x*blockDim.x + threadIdx.x;
+    unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
+
+    if ( y*qVectorsStrideFloat+x < size)
+    {
+        d_res_stacked[y*qVectorsStrideFloat+x] = d_res_stacked[y*qVectorsStrideFloat+x]-d_fi[y*qVectorsStrideFloat+x];
+    }
+
+}
+
+
+
 extern "C" void launch_kernel_blur(float *out, int outStride, float *in, int inStride, float* blur_kernel, int blurWidth, int width, int height)
 {
     // execute the kernel
@@ -98,7 +114,16 @@ extern "C" void launch_kernel_blur(float *out, int outStride, float *in, int inS
     cutilCheckMsg("execution failed\n");
 }
 
+extern "C" void  launch_kernel_subtract(float* d_fi, int imgVectorsStrideFloat, float* d_res_stacked, int qVectorsStrideFloat, int size, int width, int height)
+{
 
+    // execute the kernel
+    dim3 block(8, 8, 1);
+    dim3 grid(width / block.x, height / block.y, 1);
+    kernel_subtract<<< grid, block>>>(d_fi, imgVectorsStrideFloat, d_res_stacked, qVectorsStrideFloat, size);
+    cutilCheckMsg("execution failed\n");
+
+}
 
 
 //__global__ void launch_kernel_blurTranspose(float *out, int outStride, float *in, int inStride, float* blur_kernelT, int blurWidth)
