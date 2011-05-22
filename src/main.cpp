@@ -537,39 +537,6 @@ int main( int argc, char* argv[] )
 
 
 
-    // CSR to CSC conversion to obtain the expression for Transpose!
-
-
-
-    //can avoid this by using 2D malloc I think!
-//    N_imgs = 700;
-
-
-
-
-    cout<<"everything looks okay!"<<endl;
-
-//   {
-
-
-
-
-
-//   for(int i = 0 ; i < N_imgs ; i++)
-//   {
-
-//   }
-
-
-//   cutilSafeCall(cudaMalloc((void**)&d_W, size_wantedW*sizeof (float)*size_wantedW));
-
-
-
-//   }
-
-
-
-//   exit(1);
 
 
    //###########################################################################################################
