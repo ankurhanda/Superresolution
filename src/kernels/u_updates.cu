@@ -52,7 +52,7 @@ extern "C" void launch_kernel_derivative_u(float* ux_, float *uy_, float* u_, un
 
 //launch_kernel_primal_u(d_px,d_py,d_u_,d_u, superresolutionImageStride, epsilon_u,tau,xisqr, d_dual_save_WTBTDTq, WTBTDTqStrideFloat,width_up,height_up,N_imgs);
 
-__global__ void kernel_primalu(float *px, float *py, float* u_, float *u, int upImageStrideFloat, float epsilon_u, float tau, float xisqr, float *WiT_BiT_DiT_qi,
+__global__ void kernel_primalu(float *px, float *py, float* u_, float *u, int upImageStrideFloat, float epsilon_u, float* d_tau, float xisqr, float *WiT_BiT_DiT_qi,
                                unsigned int WTBTDTstride, unsigned int width_up, unsigned int height_up, int N_imgs)
 {
 
@@ -88,7 +88,8 @@ __global__ void kernel_primalu(float *px, float *py, float* u_, float *u, int up
         }
 
 
-        u[y*upImageStrideFloat+x] = prev_u - tau*( -divp + xisqr*sum_WiT_BiT_DiT_qi);
+        float tau = d_tau[y*upImageStrideFloat+x];
+        u[y*upImageStrideFloat+x] = prev_u - tau*( -divp + 1.0f*sum_WiT_BiT_DiT_qi);
 
         u_[y*upImageStrideFloat+x] = 2*u[y*upImageStrideFloat+x] - prev_u;
     }
@@ -97,13 +98,13 @@ __global__ void kernel_primalu(float *px, float *py, float* u_, float *u, int up
 
 
 // Wrapper for the __global__ call that sets up the kernel call
-extern "C" void launch_kernel_primal_u(float *px, float *py, float* u_, float *u, int upImageStrideFloat, float epsilon_u, float tau, float xisqr, float *WiT_BiT_DiT_qi,
+extern "C" void launch_kernel_primal_u(float *px, float *py, float* u_, float *u, int upImageStrideFloat, float epsilon_u, float* d_tau, float xisqr, float *WiT_BiT_DiT_qi,
                                        unsigned int WTBTDTstride, unsigned int width_up, unsigned int height_up, int N_imgs)
 {
     // execute the kernel
     dim3 block(8, 8, 1);
     dim3 grid(width_up / block.x, height_up / block.y, 1);
-    kernel_primalu<<< grid, block>>>(px, py, u_,u, upImageStrideFloat, epsilon_u, tau,xisqr, WiT_BiT_DiT_qi, WTBTDTstride, width_up, height_up,N_imgs);
+    kernel_primalu<<< grid, block>>>(px, py, u_,u, upImageStrideFloat, epsilon_u, d_tau, xisqr, WiT_BiT_DiT_qi, WTBTDTstride, width_up, height_up,N_imgs);
     cutilCheckMsg("execution failed\n");
 }
 

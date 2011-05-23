@@ -29,11 +29,11 @@ __global__ void kernel_q_SubtractDBWiu_fAdd_yAndReproject(float *d_qi, int qStri
     if ( y*qStride + x < width_down*height_down)
     {
 
-       float result_val = d_qi[y*qStride+x] + sigma_q*xisqr*(d_DBWiu_fi[y*DBWiu_fiStride+x]);
-       result_val = result_val/(1 + sigma_q*epsilon_d/xisqr);
+       float result_val = d_qi[y*qStride+x] + sigma_q*1.0f*(d_DBWiu_fi[y*DBWiu_fiStride+x]);
+       result_val = result_val/(1 + sigma_q*epsilon_d/1.0f);
 
-       result_val = max(-xisqr*1.0f, min(xisqr*1.0f, result_val)); // clamped reprojection
-
+       //result_val = max(-xisqr*1.0f, min(xisqr*1.0f, result_val)); // clamped reprojection
+       result_val = max(-1.0f, min(1.0f, result_val)); // to be L1 thing!
        d_qi[y*qStride+x] = result_val;
     }
 

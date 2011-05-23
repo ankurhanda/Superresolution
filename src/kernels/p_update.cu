@@ -32,7 +32,7 @@ __global__ void kernel_dualp(float *px, float *py, float *ux_, float *uy_, float
 
     float reprojection = 0;
     reprojection   = sqrt(pxval*pxval + pyval*pyval);
-    reprojection   = max(1,reprojection/lambda);
+    reprojection   = max(1.0f,reprojection/lambda);
 
     px[y*stride+x] = px[y*stride+x]/reprojection;
     py[y*stride+x] = py[y*stride+x]/reprojection;

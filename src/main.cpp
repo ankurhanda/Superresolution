@@ -20,6 +20,8 @@
 #include <cusparse.h>
 #include <cublas.h>
 
+#include <sstream>
+#include <fstream>
 
 //#include <thrust/host_vector.h>
 //#include <thrust/device_vector.h>
@@ -39,7 +41,7 @@ using namespace CVD;
 
 
 
-extern "C" void launch_kernel_primal_u(float *px, float *py, float* u_, float *u, int upImageStrideFloat, float epsilon_u, float tau, float xisqr, float *WiT_BiT_DiT_qi,
+extern "C" void launch_kernel_primal_u(float *px, float *py, float* u_, float *u, int upImageStrideFloat, float epsilon_u, float* d_tau, float xisqr, float *WiT_BiT_DiT_qi,
                                        unsigned int WTBTDTstride, unsigned int width_up, unsigned int height_up, int N_imgs);
 
 extern "C" void launch_kernel_q_SubtractDBWiu_fAdd_yAndReproject(float *d_qi, int qStride,
@@ -84,12 +86,10 @@ int height_window = 512;
 int main( int argc, char* argv[] )
 {
 
-    //buildWMatrixBilinearInterpolation(N_imgs, N_rows_upimg, N_cols_upimg, WMatvalPtr, WMatrowPtr, WMatcolPtr);
 
     float L = sqrt(8);
     float tau = 1.0f/L;
     float sigma = 1.0f/L;
-    float lambda = 10;
 
     srand ( time(NULL) );
 
@@ -797,6 +797,9 @@ int main( int argc, char* argv[] )
     }
 
 
+    // There are no images read, Ankur! Read them....
+
+
 //    {
 //        ScopedCuTimer cuTime("csr2csc conversion time");
 //        cusparseScsr2csc(handle, size_wanted, size_wanted*N_imgs, d_cscWMatvalPtr, d_cscWMatcolPtr, d_cscWMatrowPtr, d_csrWMatStackedval,
@@ -959,6 +962,8 @@ int main( int argc, char* argv[] )
 
 
 
+
+
     cout << "N_rows_low_img = " << N_rows_low_img << endl;
 
     CVD::Image<CVD::byte> WarpedImage = CVD::Image<CVD::byte>(ImageRef(N_cols_upimg,N_rows_upimg));
@@ -1065,7 +1070,9 @@ int main( int argc, char* argv[] )
     float *d_res;
     float *d_dual_save_WTBTDTq;
     float *d_dual_save_BTDTq;
-    float *d_fi;
+
+    float *d_fi; // All Input Images
+
     float *d_qi;
     float *d_res_stacked;
 
@@ -1113,6 +1120,88 @@ int main( int argc, char* argv[] )
 
     cout << "Memory Initialisation already!" <<endl;
 
+
+    ifstream tau_file("tau.txt");
+
+    float* h_tau = new float[size_wanted];
+    float* d_tau;
+
+
+    //Read Input Images
+
+    for(int i = 0 ; i < N_imgs ; i++)
+    {
+        CVD::Image<float> inputImage;// = CVD::Image<float>(ImageRef(N_cols_low_img,N_rows_low_img));
+
+        char imgName[100];
+        sprintf(imgName,"../data/images/car_%03d.pgm",i+1);
+
+        img_load(inputImage,imgName);
+        // Image Loaded!
+
+        cudaMemcpy(d_fi+(size_have)*i,inputImage.data(),sizeof(float)*size_have,cudaMemcpyHostToDevice);
+
+    }
+    cout << "Images have been loaded!" <<endl;
+
+
+    char readlinedata[300];
+    while(!tau_file.eof())
+    {
+        tau_file.getline(readlinedata, 300);
+
+        istringstream iss(readlinedata);
+
+        float val;
+        iss >> val;
+
+        static int pos = 0;
+        h_tau[pos] = val;
+        pos++;
+
+    }
+
+    cutilSafeCall(cudaMallocPitch(&d_tau,&upImageFloatPitch,sizeof(float)*N_cols_upimg,N_rows_upimg));
+    cudaMemcpy(d_tau,h_tau,sizeof(float)*size_wanted,cudaMemcpyHostToDevice);
+
+
+
+
+    cout << "Here after reading the file contents!" << endl;
+
+
+
+//    float* h_Wiu_copy = new float[size_wanted];
+
+//    for(int i = 0 ; i < N_imgs ; i++)
+//    {
+
+//        for(int row = 0 ; row < N_rows_upimg ; row++)
+//        {
+//            for(int col = 0 ; col < N_cols_upimg ; col++)
+//            {
+//                cudaMemcpy(h_Wiu_copy,d_Wis_u_+(size_wanted)*i,sizeof(float)*size_wanted,cudaMemcpyDeviceToHost);
+////                cudaMemcpy(d_Wiu_copy,d_Wis_u_+(size_wanted)*i,sizeof(float)*size_wanted,cudaMemcpyDeviceToDevice);
+
+
+//                WarpedImage[ImageRef(col,row)] = (unsigned char)(h_Wiu_copy[row*N_cols_upimg+col]*255.0f);
+//            }
+//        }
+
+//        char fileName[40];
+//        sprintf(fileName,"WarpedImageMemcpyone_%02d.png",i);
+//        img_save(WarpedImage,fileName);
+//    }
+
+
+
+
+
+
+
+
+
+
     // Add images into d_fi;
 
 
@@ -1134,10 +1223,6 @@ int main( int argc, char* argv[] )
 
     double xisqr = scale*scale;
 
-    float epsilon_u=0.01;
-    float epsilon_d=0.01;
-    float sigma_q=0;
-    float sigma_p=0;
 
 
 
@@ -1195,6 +1280,13 @@ int main( int argc, char* argv[] )
 
     cout <<" Pangolin initialised!"<<endl;
 
+    float lambda    = 0.1;
+    float epsilon_u = 0.0;
+    float epsilon_d = 0.0;
+    float sigma_q   = 1.0f;
+    float sigma_p   = 1/(2*lambda);
+
+
 
 
     long doIt =0;
@@ -1203,7 +1295,7 @@ int main( int argc, char* argv[] )
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 //        cout << "Iteration = "<< doIt << endl;
 
-        if( doIt%100==0)
+        if( doIt%100 == 0)
         {
             ScopedCuTimer cuTime("TOTAL TIME PER ITERATION ");
 
@@ -1235,9 +1327,45 @@ int main( int argc, char* argv[] )
                 cudaMemcpy(d_res_stacked +(size_have)*i,d_res,sizeof(float)*size_have,cudaMemcpyDeviceToDevice);
             }
 
+
+//            float* h_res = new float[size_have];
+
+//            CVD::Image<CVD::byte>DBWImage = CVD::Image<CVD::byte>(ImageRef(N_cols_low_img,N_rows_low_img));
+
+//            for(int i = 0 ; i < N_imgs ; i++)
+//            {
+
+//                for(int row = 0 ; row < N_rows_low_img ; row++)
+//                {
+//                    for(int col = 0 ; col < N_cols_low_img ; col++)
+//                    {
+//                        cudaMemcpy(h_res,d_fi+(size_have)*i,sizeof(float)*size_have,cudaMemcpyDeviceToHost);
+
+
+//                        DBWImage[ImageRef(col,row)] = (unsigned char)(h_res[row*N_cols_low_img+col]*255.0f);
+//                    }
+//                }
+
+//                char fileName[40];
+//                sprintf(fileName,"DBWImageMemcpyone_%03d.png",i);
+//                img_save(DBWImage,fileName);
+//            }
+
+
+
+
+//            cout << "imageVectorsStrideFloat = "<< imgVectorsStrideFloat << endl;
+//            cout << "qVectorsStrideFloat = "<< qVectorsStrideFloat << endl;
+
+
+
+
+
+
+
             //cublasSaxpy(size_have*N_imgs, -1.0f, d_fi, imgVectorsStrideFloat, d_res_stacked, qVectorsStrideFloat);
 
-            launch_kernel_subtract(d_fi, imgVectorsStrideFloat, d_res_stacked, qVectorsStrideFloat,size_have*N_imgs,N_cols_low_img,N_rows_low_img*N_imgs);
+            launch_kernel_subtract(d_fi, imgVectorsStrideFloat, d_res_stacked, qVectorsStrideFloat, size_have*N_imgs, N_cols_low_img, N_rows_low_img*N_imgs);
 
             launch_kernel_q_SubtractDBWiu_fAdd_yAndReproject(d_qi, qVectorsStrideFloat,
                                                              d_res_stacked,qVectorsStrideFloat,
@@ -1264,12 +1392,13 @@ int main( int argc, char* argv[] )
             }
 
             // do batch Wi^{T}yu;
+
             cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, N_imgs*size_wanted, 1.0, descr, d_cscWMatvalPtr, d_cscWMatcolPtr, d_cscWMatrowPtr,
                            d_dual_save_BTDTq, 0.0, d_dual_save_WTBTDTq);
 
             //launch kernel u ;
             // Remeber to remove this WTBTDTqStrideFloat thing!
-            launch_kernel_primal_u(d_px,d_py,d_u_,d_u, upImageStrideFloat, epsilon_u,tau,xisqr, d_dual_save_WTBTDTq, WTBTDTqStrideFloat,width_up,height_up,N_imgs);
+            launch_kernel_primal_u(d_px,d_py,d_u_,d_u, upImageStrideFloat, epsilon_u,d_tau,xisqr, d_dual_save_WTBTDTq, WTBTDTqStrideFloat,width_up,height_up,N_imgs);
 
 
         }
@@ -1277,15 +1406,15 @@ int main( int argc, char* argv[] )
 
         {
             //do some display stuff
-//            {
+            {
 
-//                view_image1.ActivateScissorAndClear();
-//                DisplayFloatDeviceMem(&view_image1, d_u,upImageStrideFloat, greypbo,greyTexture);
+                view_image1.ActivateScissorAndClear();
+                DisplayFloatDeviceMem(&view_image1, d_u,upImageFloatPitch, greypbo,greyTexture);
 
-//                view_image2.ActivateScissorAndClear();
-//                DisplayFloatDeviceMem(&view_image2, d_u,upImageStrideFloat, greypbo,greyTexture);
+                view_image2.ActivateScissorAndClear();
+                DisplayFloatDeviceMem(&view_image2, d_u,upImageFloatPitch, greypbo,greyTexture);
 
-//            }
+            }
         }
 
 
