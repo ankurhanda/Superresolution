@@ -780,6 +780,10 @@ int main( int argc, char* argv[] )
     int* d_cscWMatcolPtr;
     int* d_cscWMatrowPtr;
 
+    float* d_cscBMatvalPtr;
+    int* d_cscBMatcolPtr;
+    int* d_cscBMatrowPtr;
+
 
 
     // Remember this is csc so col and rows are swapped!
@@ -788,11 +792,14 @@ int main( int argc, char* argv[] )
     cutilSafeCall(cudaMalloc((void**)&d_cscWMatcolPtr, (size_wanted+1)*sizeof (int)));
 
 
+
+
     {
         ScopedCuTimer cuTime("csr2csc conversion time");
         cusparseScsr2csc(handle,size_wanted*N_imgs, size_wanted, d_csrWMatStackedval, d_csrWMatStackedrow, d_csrWMatStackedcol, d_cscWMatvalPtr,
                      d_cscWMatrowPtr, d_cscWMatcolPtr, 1, CUSPARSE_INDEX_BASE_ZERO);
     }
+
 
 
 
@@ -914,6 +921,9 @@ int main( int argc, char* argv[] )
 
 
 
+    cutilSafeCall(cudaMalloc((void**)&d_cscBMatvalPtr, NnzBlurMat*sizeof (float)));
+    cutilSafeCall(cudaMalloc((void**)&d_cscBMatrowPtr, (NnzBlurMat)*sizeof(int)));
+    cutilSafeCall(cudaMalloc((void**)&d_cscBMatcolPtr, (size_wanted+1)*sizeof (int)));
 
 
     // Check if the Blur is working...
@@ -936,6 +946,16 @@ int main( int argc, char* argv[] )
     }
 
     img_save(blurredImage,"blurredImage.png");
+
+
+    {
+        ScopedCuTimer cuTime("csr2csc conversion time for blur");
+        cusparseScsr2csc(handle,size_wanted, size_wanted, d_BMatvalPtr, d_BMatrowPtr, d_BMatcolPtr, d_cscBMatvalPtr,
+                     d_cscBMatrowPtr, d_cscBMatcolPtr, 1, CUSPARSE_INDEX_BASE_ZERO);
+    }
+
+
+
 
     // Checked!
 
@@ -1165,9 +1185,8 @@ int main( int argc, char* argv[] )
     }
 
 
-    ifstream dT_file("dtranspose.txt");
+    ifstream dT_file("btranspose.txt");
     float* h_dT = new float[size_wanted];
-    float* d_dT;
 
 //    char readlinedata[300];
 //    pos = 0;
@@ -1336,8 +1355,11 @@ int main( int argc, char* argv[] )
     cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_have, 1.0, descr, d_DMatvalPtrT, d_DMatrowPtrT,
                                                         d_DMatcolPtrT, d_low_img, 0.0, d_DTqi_copy);
 
+    cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_wanted, 1.0, descr, d_cscBMatvalPtr, d_cscBMatcolPtr,
+                   d_cscBMatrowPtr, d_DTqi_copy, 0.0, d_BTDTqi);
 
-    cudaMemcpy(h_AxT,d_DTqi_copy,sizeof(float)*size_wanted,cudaMemcpyDeviceToHost);
+
+    cudaMemcpy(h_AxT,d_BTDTqi,sizeof(float)*size_wanted,cudaMemcpyDeviceToHost);
 
 
     for(int row = 0 ; row < N_rows_upimg ; row++)
@@ -1464,8 +1486,8 @@ int main( int argc, char* argv[] )
 //                                                    d_DMatcolPtrT, d_ydcopyqi, 0.0, d_DTqi_copy);
 
 //                //do B^{T}*(D^{T}*yu);
-//                cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_wanted, 1.0, descr, d_BMatvalPtrT, d_BMatrowPtrT,
-//                                                    d_BMatcolPtrT, d_DTqi_copy, 0.0, d_BTDTqi);
+//                cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_wanted, 1.0, descr, d_cscBMatvalPtr, d_cscBMatcolPtr,
+//                                                    d_cscBMatrowPtr, d_DTqi_copy, 0.0, d_BTDTqi);
 
 //                //copy the contents to d_dual_save_BTDT_q
 //                cudaMemcpy(d_dual_save_BTDTq +(size_wanted)*i,d_BTDTqi,sizeof(float)*size_wanted,cudaMemcpyDeviceToDevice);

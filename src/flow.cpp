@@ -387,7 +387,7 @@ void buildBlurMatrixFromKernel(int size_wanted, int N_rows_upimg, int N_cols_upi
                         int col    = (y+i)*N_cols_upimg + (x+j);
 
                         int index   =  (row)*size_wanted + col;
-                        int indexT  = (col)*size_wanted + row;
+                        int indexT  =  row + (col)*size_wanted;
 
 
                         float val = blurKernel[(y+blurWidth/2)*blurWidth + x+blurWidth/2]/sum_kernel;
