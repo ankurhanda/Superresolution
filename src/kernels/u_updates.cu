@@ -89,7 +89,7 @@ __global__ void kernel_primalu(float *px, float *py, float* u_, float *u, int up
 
 
         float tau = d_tau[y*upImageStrideFloat+x];
-        u[y*upImageStrideFloat+x] = prev_u - tau*( -divp + 1.0f*sum_WiT_BiT_DiT_qi);
+        u[y*upImageStrideFloat+x] = prev_u - tau*( -divp + xisqr*sum_WiT_BiT_DiT_qi);
 
         u_[y*upImageStrideFloat+x] = 2*u[y*upImageStrideFloat+x] - prev_u;
     }

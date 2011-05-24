@@ -12,7 +12,7 @@
 #endif
 
 
-__global__ void kernel_dualp(float *px, float *py, float *ux_, float *uy_, float epsilon_u, float sigma, float lambda,
+__global__ void kernel_dualp(float *px, float *py, float *ux_, float *uy_, float epsilon_u, float sigma_p, float lambda,
                              unsigned int stride)
 {
 
@@ -24,8 +24,8 @@ __global__ void kernel_dualp(float *px, float *py, float *ux_, float *uy_, float
     unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
 
     // write output vertex
-    px[y*stride+x] = (px[y*stride+x] + sigma* ux_[y*stride+x])/(1+sigma*epsilon_u/lambda);
-    py[y*stride+x] = (py[y*stride+x] + sigma* uy_[y*stride+x])/(1+sigma*epsilon_u/lambda);
+    px[y*stride+x] = (px[y*stride+x] + sigma_p* ux_[y*stride+x])/(1+sigma_p*epsilon_u/lambda);
+    py[y*stride+x] = (py[y*stride+x] + sigma_p* uy_[y*stride+x])/(1+sigma_p*epsilon_u/lambda);
 
     float pxval = px[y*stride+x];
     float pyval = py[y*stride+x];
@@ -43,13 +43,13 @@ __global__ void kernel_dualp(float *px, float *py, float *ux_, float *uy_, float
 
 
 // Wrapper for the __global__ call that sets up the kernel call
-extern "C" void launch_kernel_dual_variable_p(float *px, float *py, float* ux_, float *uy_, float epsilon_u, float sigma, float lambda,
+extern "C" void launch_kernel_dual_variable_p(float *px, float *py, float* ux_, float *uy_, float epsilon_u, float sigma_p, float lambda,
                                               unsigned int stride, unsigned int mesh_width, unsigned int mesh_height)
 {
     // execute the kernel
     dim3 block(8, 8, 1);
     dim3 grid(mesh_width / block.x, mesh_height / block.y, 1);
-    kernel_dualp<<< grid, block>>>(px,py,ux_,uy_,epsilon_u, sigma, lambda, stride);
+    kernel_dualp<<< grid, block>>>(px,py,ux_,uy_,epsilon_u, sigma_p, lambda, stride);
     cutilCheckMsg("execution failed\n");
 }
 
