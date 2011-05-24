@@ -795,7 +795,6 @@ int main( int argc, char* argv[] )
     }
 
 
-    // There are no images read, Ankur! Read them....
 
 
 //    {
@@ -1308,7 +1307,7 @@ int main( int argc, char* argv[] )
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 //        cout << "Iteration = "<< doIt << endl;
 
-        if( doIt%100 == 0)
+        if( doIt == 1)
         {
             ScopedCuTimer cuTime("TOTAL TIME PER ITERATION ");
 
@@ -1323,7 +1322,7 @@ int main( int argc, char* argv[] )
             // q^{n+1} =  max(-xisqr, min(xisqr, q^{n+1}))
 
             cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted*N_imgs, size_wanted, 1.0, descr, d_csrWMatStackedval,
-                                                            d_csrWMatStackedrow, d_csrWMatStackedcol, d_u_, 0.0, d_Wis_u_);
+                                                            d_csrWMatStackedrow, d_csrWMatStackedcol, d_img, 0.0, d_Wis_u_);
 
             for (int i = 0 ; i < N_imgs ; i++)
             {
@@ -1370,13 +1369,7 @@ int main( int argc, char* argv[] )
 //            cout << "imageVectorsStrideFloat = "<< imgVectorsStrideFloat << endl;
 //            cout << "qVectorsStrideFloat = "<< qVectorsStrideFloat << endl;
 
-
-
-
-
-
-
-            //cublasSaxpy(size_have*N_imgs, -1.0f, d_fi, imgVectorsStrideFloat, d_res_stacked, qVectorsStrideFloat);
+//            cublasSaxpy(size_have*N_imgs, -1.0f, d_fi, imgVectorsStrideFloat, d_res_stacked, qVectorsStrideFloat);
 
             launch_kernel_subtract(d_fi, imgVectorsStrideFloat, d_res_stacked, qVectorsStrideFloat, size_have*N_imgs, N_cols_low_img, N_rows_low_img*N_imgs);
 
@@ -1410,13 +1403,6 @@ int main( int argc, char* argv[] )
 //            img_save(DTImage,"DTImage.png");
 
 
-
-
-
-
-
-
-
             for(int i = 0 ; i < N_imgs ; i++)
             {
                 //copy_qi_to_yu;
@@ -1443,6 +1429,26 @@ int main( int argc, char* argv[] )
             //launch kernel u ;
             // Remeber to remove this WTBTDTqStrideFloat thing!
             launch_kernel_primal_u(d_px,d_py,d_u_,d_u, upImageStrideFloat, epsilon_u,d_tau,xisqr, d_dual_save_WTBTDTq, WTBTDTqStrideFloat,width_up,height_up,N_imgs);
+
+
+
+//            cudaMemcpy(h_AxT,d_u,sizeof(float)*size_wanted,cudaMemcpyDeviceToHost);
+
+
+//            //            float* h_res = new float[size_have];
+
+//            CVD::Image<CVD::byte>DTImage = CVD::Image<CVD::byte>(ImageRef(N_cols_upimg,N_rows_upimg));
+
+
+//            for(int row = 0 ; row < N_rows_upimg ; row++)
+//            {
+//                for(int col = 0 ; col < N_cols_upimg ; col++)
+//                {
+//                    DTImage[ImageRef(col,row)] = (unsigned char)(h_AxT[row*N_cols_upimg+col]*255.0f);
+//                }
+//            }
+
+//            img_save(DTImage,"DTImage.png");
 
 
         }
