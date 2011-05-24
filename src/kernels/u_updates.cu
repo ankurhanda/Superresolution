@@ -77,19 +77,19 @@ __global__ void kernel_primalu(float *px, float *py, float* u_, float *u, int up
 
         float prev_u = u[y*upImageStrideFloat+x];
 
-        int image_size = width_up*height_up;
 
         float sum_WiT_BiT_DiT_qi = 0;
+        int image_size = width_up*height_up;
 
         for(int i = 0 ; i < N_imgs; i++)
         {
-
             sum_WiT_BiT_DiT_qi += WiT_BiT_DiT_qi[y*upImageStrideFloat+x + (image_size*i)];
         }
 
 
         float tau = d_tau[y*upImageStrideFloat+x];
-        u[y*upImageStrideFloat+x] = prev_u - tau*( -divp + xisqr*sum_WiT_BiT_DiT_qi);
+
+        u[y*upImageStrideFloat+x]  = prev_u - tau*( -divp + 1.0f*sum_WiT_BiT_DiT_qi);
 
         u_[y*upImageStrideFloat+x] = 2*u[y*upImageStrideFloat+x] - prev_u;
     }

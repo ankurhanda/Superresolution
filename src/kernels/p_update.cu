@@ -17,22 +17,22 @@ __global__ void kernel_dualp(float *px, float *py, float *ux_, float *uy_, float
 {
 
 
-    //p^{n+1} = \frac{p^n + \sigma \nabla u^{n}}{1 + sigma*epsilon_u/ lambda}
-    //p^{n+1} = p^{n+1} / max ( 1, |p^{n+1}|/lambda )
+
 
     unsigned int x = blockIdx.x*blockDim.x + threadIdx.x;
     unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
 
     // write output vertex
-    px[y*stride+x] = (px[y*stride+x] + sigma_p* ux_[y*stride+x])/(1+sigma_p*epsilon_u/lambda);
-    py[y*stride+x] = (py[y*stride+x] + sigma_p* uy_[y*stride+x])/(1+sigma_p*epsilon_u/lambda);
+
+    px[y*stride+x] = (px[y*stride+x] + sigma_p*lambda*ux_[y*stride+x]);
+    py[y*stride+x] = (py[y*stride+x] + sigma_p*lambda*uy_[y*stride+x]);
 
     float pxval = px[y*stride+x];
     float pyval = py[y*stride+x];
 
     float reprojection = 0;
     reprojection   = sqrt(pxval*pxval + pyval*pyval);
-    reprojection   = max(1.0f,reprojection/lambda);
+    reprojection   = max(1.0f,reprojection);
 
     px[y*stride+x] = px[y*stride+x]/reprojection;
     py[y*stride+x] = py[y*stride+x]/reprojection;
