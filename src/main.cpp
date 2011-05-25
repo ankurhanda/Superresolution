@@ -1557,19 +1557,25 @@ int main( int argc, char* argv[] )
 
 
 
+
+            cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_have, size_wanted, 1.0, descr, d_DMatvalPtr, d_DMatrowPtr, d_DMatcolPtr, d_u, 0.0, d_res);
+
 //            launch_kernel_subtract(d_fi, imgVectorsStrideFloat, d_res_stacked, qVectorsStrideFloat, size_have*N_imgs, N_cols_low_img, N_rows_low_img*N_imgs);
 
+//            cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_wanted, 1.0, descr, d_BMatvalPtr, d_BMatrowPtr, d_BMatcolPtr, d_u, 0.0, d_Bx);
+//            cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_wanted, 1.0, descr, d_cscBMatvalPtr, d_cscBMatcolPtr,
+//                           d_cscBMatrowPtr, d_u, 0.0, d_Bx);
 
             for(int i = 0 ; i < 1 ; i++ )
             {
-                cudaMemcpy(h_AxT,d_Wis_u_+size_wanted*i,sizeof(float)*size_wanted,cudaMemcpyDeviceToHost);
+                cudaMemcpy(h_res,d_res,sizeof(float)*size_have,cudaMemcpyDeviceToHost);
 
-                for(int row = 0 ; row < N_rows_upimg ; row++)
+                for(int row = 0 ; row < N_rows_low_img ; row++)
                 {
                     cout<<"row value = "<<row<<endl;
-                    for(int col = 0 ; col < N_cols_upimg ; col++)
+                    for(int col = 0 ; col < N_cols_low_img ; col++)
                     {
-                        cout<<h_AxT[row*N_cols_upimg+col]<< " ";
+                        cout<<h_res[row*N_cols_low_img+col]<< " ";
                     }
                     cout<<endl;
                 }
