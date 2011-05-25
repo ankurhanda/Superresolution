@@ -297,8 +297,8 @@ void buildWMatrixBilinearInterpolation(int N_imgs, int size_wanted, int N_rows_u
                 index = idx + row_index*size_wanted;
                 indexT = idx*size_wanted + row_index;//*size_wanted;
 
-//                h_vectorofMaps[img_no-1][index] = (1-x_ratio)*(1-y_ratio);
-                h_vectorofMaps[img_no-1][index] = (x_ratio)*(y_ratio);
+                h_vectorofMaps[img_no-1][index] = (1-x_ratio)*(1-y_ratio);
+//                h_vectorofMaps[img_no-1][index] = (x_ratio)*(y_ratio);
 //                h_vectorofMaps[img_no-1][indexT] = (1-x_ratio)*(1-y_ratio);
 
 
@@ -328,7 +328,7 @@ void buildWMatrixBilinearInterpolation(int N_imgs, int size_wanted, int N_rows_u
                     index = idx + row_index*size_wanted;
                     indexT = idx*size_wanted + row_index;
 
-                    h_vectorofMaps[img_no-1][index] = (1-x_ratio)*(1-y_ratio);
+                    h_vectorofMaps[img_no-1][index] = (x_ratio)*(y_ratio);
 //                    h_vectorofMaps[img_no-1][indexT] = (x_ratio)*(y_ratio);
 
                 }

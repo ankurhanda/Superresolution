@@ -437,10 +437,17 @@ int main( int argc, char* argv[] )
 
 
 
+
+
+
     float *h_csrWMatStackedval = new float[total_nonzeros];
     int *h_csrWMatStackedrow = new int[size_wanted*N_imgs+1];
     int *h_csrWMatStackedcol = new int[total_nonzeros];
 
+
+    float *d_WMatvalPtr;
+    int *d_WMatrowPtr;
+    int *d_WMatcolPtr;
 
 
     for(int i = 0 ; i < N_imgs ; i++)
@@ -509,6 +516,19 @@ int main( int argc, char* argv[] )
         }
         WMatrowPtr[i][0] = 0;
 
+
+        if ( i == 0)
+        {
+
+            cutilSafeCall(cudaMalloc((void**)&d_WMatvalPtr, NnzWMat*sizeof (float)));
+            cutilSafeCall(cudaMalloc((void**)&d_WMatcolPtr, (NnzWMat)*sizeof(int)));
+            cutilSafeCall(cudaMalloc((void**)&d_WMatrowPtr, (size_wanted+1)*sizeof (int)));
+
+            cudaMemcpy(d_WMatvalPtr, WMatvalPtr[i], NnzWMat*sizeof(float), cudaMemcpyHostToDevice);
+            cudaMemcpy(d_WMatcolPtr, WMatcolPtr[i], NnzWMat*sizeof(int), cudaMemcpyHostToDevice);
+            cudaMemcpy(d_WMatrowPtr, WMatrowPtr[i], (size_wanted+1)*sizeof(int), cudaMemcpyHostToDevice);
+
+        }
 
         static int total_non_zeros_so_far = 0;
 
@@ -804,11 +824,11 @@ int main( int argc, char* argv[] )
 
 
 
-    {
-        ScopedCuTimer cuTime("csr2csc conversion time");
-        cusparseScsr2csc(handle,size_wanted*N_imgs, size_wanted, d_csrWMatStackedval, d_csrWMatStackedrow, d_csrWMatStackedcol, d_cscWMatvalPtr,
-                     d_cscWMatrowPtr, d_cscWMatcolPtr, 1, CUSPARSE_INDEX_BASE_ZERO);
-    }
+//    {
+//        ScopedCuTimer cuTime("csr2csc conversion time");
+//        cusparseScsr2csc(handle,size_wanted*N_imgs, size_wanted, d_csrWMatStackedval, d_csrWMatStackedrow, d_csrWMatStackedcol, d_cscWMatvalPtr,
+//                     d_cscWMatrowPtr, d_cscWMatcolPtr, 1, CUSPARSE_INDEX_BASE_ZERO);
+//    }
 
 
 
@@ -1537,27 +1557,27 @@ int main( int argc, char* argv[] )
 //            // q^{n+1} = \frac{q^n + \sigma \xi^{2} (DBWu_ - f)}{ 1 + epsilon_d*sigma_q/xisqr}
 //            // q^{n+1} =  max(-xisqr, min(xisqr, q^{n+1}))
 
-            cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted*N_imgs, size_wanted, 1.0, descr, d_csrWMatStackedval,
-                                                            d_csrWMatStackedrow, d_csrWMatStackedcol, d_u_, 0.0, d_Wis_u_);
+            cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_wanted, 1.0, descr, d_WMatvalPtr,
+                                                            d_WMatrowPtr, d_WMatcolPtr, d_u_, 0.0, d_Wiu_copy);
 
-            for (int i = 0 ; i < N_imgs ; i++)
-            {
-                // copy
-                cudaMemcpy(d_Wiu_copy,d_Wis_u_+(size_wanted)*i,sizeof(float)*size_wanted,cudaMemcpyDeviceToDevice);
+//            for (int i = 0 ; i < N_imgs ; i++)
+//            {
+//                // copy
+//                cudaMemcpy(d_Wiu_copy,d_Wis_u_+(size_wanted)*i,sizeof(float)*size_wanted,cudaMemcpyDeviceToDevice);
 
-                // Do B*(d_Wis_u_)
-                cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_wanted, 1.0, descr, d_BMatvalPtr, d_BMatrowPtr, d_BMatcolPtr, d_Wiu_copy, 0.0, d_Bx);
+//                // Do B*(d_Wis_u_)
+//                cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_wanted, 1.0, descr, d_BMatvalPtr, d_BMatrowPtr, d_BMatcolPtr, d_Wiu_copy, 0.0, d_Bx);
 
-                // Do D*(B*(d_Wis_u_))
-                cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_have, size_wanted, 1.0, descr, d_DMatvalPtr, d_DMatrowPtr, d_DMatcolPtr, d_Bx, 0.0, d_res);
+//                // Do D*(B*(d_Wis_u_))
+//                cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_have, size_wanted, 1.0, descr, d_DMatvalPtr, d_DMatrowPtr, d_DMatcolPtr, d_Bx, 0.0, d_res);
 
-                //copy to d_res_stacked_vector
-                cudaMemcpy(d_res_stacked +(size_have)*i,d_res,sizeof(float)*size_have,cudaMemcpyDeviceToDevice);
-            }
+//                //copy to d_res_stacked_vector
+//                cudaMemcpy(d_res_stacked +(size_have)*i,d_res,sizeof(float)*size_have,cudaMemcpyDeviceToDevice);
+//            }
 
 
-            cudaMemcpy(d_res,d_fi,sizeof(float)*size_have,cudaMemcpyDeviceToDevice);
-            cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_have, 1.0, descr, d_DMatvalPtrT, d_DMatrowPtrT, d_DMatcolPtrT, d_res, 0.0, d_Bx);
+//            cudaMemcpy(d_res,d_fi,sizeof(float)*size_have,cudaMemcpyDeviceToDevice);
+//            cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_have, 1.0, descr, d_DMatvalPtrT, d_DMatrowPtrT, d_DMatcolPtrT, d_res, 0.0, d_Bx);
 
 //            launch_kernel_subtract(d_fi, imgVectorsStrideFloat, d_res_stacked, qVectorsStrideFloat, size_have*N_imgs, N_cols_low_img, N_rows_low_img*N_imgs);
 
@@ -1582,7 +1602,7 @@ int main( int argc, char* argv[] )
 
             for(int i = 0 ; i < 1 ; i++ )
             {
-                cudaMemcpy(h_AxT,d_Bx,sizeof(float)*size_wanted,cudaMemcpyDeviceToHost);
+                cudaMemcpy(h_AxT,d_Wiu_copy,sizeof(float)*size_wanted,cudaMemcpyDeviceToHost);
 
                 for(int row = 0 ; row < N_rows_upimg ; row++)
                 {
