@@ -15,7 +15,7 @@
 __global__ void kernel_q_SubtractDBWiu_fAdd_yAndReproject(float *d_qi, int qStride,
                                                           float *d_DBWiu_fi, int DBWiu_fiStride,
                                                           float sigma_q,float xisqr,float epsilon_d,
-                                                          int width_down, int height_down)
+                                                          int N_cols_low_img, int N_rows_low_img, int N_imgs)
 {
 
 
@@ -26,11 +26,11 @@ __global__ void kernel_q_SubtractDBWiu_fAdd_yAndReproject(float *d_qi, int qStri
     unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
 
     // write output vertex
-    if ( y*qStride + x < width_down*height_down)
+    if ( y*N_cols_low_img + x < N_cols_low_img*N_rows_low_img*N_imgs)
     {
-       float result_val = d_qi[y*qStride+x] + sigma_q*(d_DBWiu_fi[y*DBWiu_fiStride+x]);
+       float result_val = d_qi[y*N_cols_low_img+x] + sigma_q*(d_DBWiu_fi[y*N_cols_low_img+x]);
        result_val = max(-1.0f, min(1.0f, result_val));
-       d_qi[y*qStride+x] = result_val;
+       d_qi[y*N_cols_low_img+x] = result_val;
     }
 
 
@@ -40,14 +40,14 @@ __global__ void kernel_q_SubtractDBWiu_fAdd_yAndReproject(float *d_qi, int qStri
 extern "C" void launch_kernel_q_SubtractDBWiu_fAdd_yAndReproject(float *d_qi, int qStride,
                                                                  float *d_DBWiu_fi, int DBWiu_fiStride,
                                                                  float sigma_q,float xisqr,float epsilon_d,
-                                                                 int width_down, int height_down)
+                                                                 int N_cols_low_img, int N_rows_low_img, int N_imgs)
 {
-    dim3 block(8, 8, 1);
-    dim3 grid(width_down / block.x, height_down / block.y, 1);
+    dim3 block(2, 2, 1);
+    dim3 grid(N_cols_low_img / block.x, N_rows_low_img*N_imgs / block.y, 1);
     kernel_q_SubtractDBWiu_fAdd_yAndReproject<<< grid, block>>>(d_qi, qStride,
                                                                 d_DBWiu_fi, DBWiu_fiStride,
                                                                 sigma_q,xisqr, epsilon_d,
-                                                                width_down, height_down);
+                                                                N_cols_low_img, N_rows_low_img, N_imgs);
     cutilCheckMsg("execution failed\n");
 }
 

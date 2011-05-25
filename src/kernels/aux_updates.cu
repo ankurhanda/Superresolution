@@ -90,15 +90,15 @@ __global__ void kernel_blur(float *out, int outStride, float *in, int inStride, 
 }
 
 
-__global__ void kernel_subtract(float* d_fi, int imgVectorsStrideFloat, float* d_res_stacked, int qVectorsStrideFloat, int size)
+__global__ void kernel_subtract(float* d_fi, int imgVectorsStrideFloat, float* d_res_stacked, int qVectorsStrideFloat, int size, unsigned int width, unsigned int height )
 {
 
     unsigned int x = blockIdx.x*blockDim.x + threadIdx.x;
     unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
 
-    if ( y*qVectorsStrideFloat+x < size)
+    if ( y*width+x < size)
     {
-        d_res_stacked[y*qVectorsStrideFloat+x] = d_res_stacked[y*qVectorsStrideFloat+x]-d_fi[y*qVectorsStrideFloat+x];
+        d_res_stacked[y*width+x] = d_res_stacked[y*width+x]-d_fi[y*width+x];
     }
 
 }
@@ -118,9 +118,9 @@ extern "C" void  launch_kernel_subtract(float* d_fi, int imgVectorsStrideFloat, 
 {
 
     // execute the kernel
-    dim3 block(8, 8, 1);
+    dim3 block(1, 1, 1);
     dim3 grid(width / block.x, height / block.y, 1);
-    kernel_subtract<<< grid, block>>>(d_fi, imgVectorsStrideFloat, d_res_stacked, qVectorsStrideFloat, size);
+    kernel_subtract<<< grid, block>>>(d_fi, imgVectorsStrideFloat, d_res_stacked, qVectorsStrideFloat, size, width, height);
     cutilCheckMsg("execution failed\n");
 
 }
