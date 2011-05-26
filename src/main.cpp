@@ -400,7 +400,12 @@ int main( int argc, char* argv[] )
     int N_imgs = 9;
     std::vector< std::map <int, float> > h_vectorofMaps(N_imgs);
 
-    buildWMatrixBilinearInterpolation(N_imgs, size_wanted, N_rows_upimg, N_cols_upimg, h_vectorofMaps);//,WMatT );
+    int test_size = 8*8;
+    float *hflow = new float [test_size];
+    float *vflow = new float [test_size];
+
+//    buildWMatrixBilinearInterpolation(N_imgs, size_wanted, N_rows_upimg, N_cols_upimg, h_vectorofMaps, hflow, vflow);//,WMatT );
+    buildWMatrixBilinearInterpolation(N_imgs, test_size, 8, 8, h_vectorofMaps, hflow, vflow);//,WMatT );
 
 
 
@@ -547,6 +552,11 @@ int main( int argc, char* argv[] )
     }
 
     h_csrWMatStackedrow[size_wanted*N_imgs] = total_nonzeros;
+
+
+
+
+
 
     cutilSafeCall(cudaMalloc((void**)&d_csrWMatStackedval, total_nonzeros*sizeof (float)));
     cutilSafeCall(cudaMalloc((void**)&d_csrWMatStackedcol, (total_nonzeros)*sizeof(int)));
@@ -1185,7 +1195,7 @@ int main( int argc, char* argv[] )
 
 
 //     cutilSafeCall(cudaMalloc((void**)&d_dual_save_WTBTDTq, (size_wanted)*sizeof(float)*N_imgs));
-     cutilSafeCall(cudaMalloc((void**)&d_dual_save_WTBTDTq, size_wanted*N_imgs*sizeof (float)));
+     cutilSafeCall(cudaMalloc((void**)&d_dual_save_WTBTDTq, size_wanted*sizeof (float)));
 
 
 //    cutilSafeCall(cudaMallocPitch(&d_dual_save_WTBTDTq,&WTBTDTqFloatPitch,sizeof(float)*size_wanted,N_imgs));
@@ -1488,6 +1498,11 @@ int main( int argc, char* argv[] )
 //    cutilSafeCall(cudaMemcpy2D(d_u_, upImageFloatPitch, input_image_up.data(), sizeof(float)*N_cols_upimg, sizeof(float)*N_cols_upimg, N_rows_upimg, cudaMemcpyHostToDevice));
 
 
+//    cusparseScsr2dense(handle,test_size,test_size)
+
+//    cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_wanted, 1.0, descr, d_WMatvalPtr,
+//                                                    d_WMatrowPtr, d_WMatcolPtr, d_u_, 0.0, d_Wiu_copy);
+    exit(1);
 
     float* h_res = new float [size_have];
 
@@ -1558,28 +1573,28 @@ int main( int argc, char* argv[] )
 //            // q^{n+1} =  max(-xisqr, min(xisqr, q^{n+1}))
 
             cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_wanted, 1.0, descr, d_WMatvalPtr,
-                                                            d_WMatrowPtr, d_WMatcolPtr, d_u_, 0.0, d_Wiu_copy);
+                                                            d_WMatrowPtr, d_WMatcolPtr, d_u, 0.0, d_Wiu_copy);
 
-//            for (int i = 0 ; i < N_imgs ; i++)
-//            {
-//                // copy
-//                cudaMemcpy(d_Wiu_copy,d_Wis_u_+(size_wanted)*i,sizeof(float)*size_wanted,cudaMemcpyDeviceToDevice);
+            for (int i = 0 ; i < N_imgs ; i++)
+            {
+                // copy
+                cudaMemcpy(d_Wiu_copy,d_Wis_u_+(size_wanted)*i,sizeof(float)*size_wanted,cudaMemcpyDeviceToDevice);
 
-//                // Do B*(d_Wis_u_)
-//                cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_wanted, 1.0, descr, d_BMatvalPtr, d_BMatrowPtr, d_BMatcolPtr, d_Wiu_copy, 0.0, d_Bx);
+                // Do B*(d_Wis_u_)
+                cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_wanted, 1.0, descr, d_BMatvalPtr, d_BMatrowPtr, d_BMatcolPtr, d_Wiu_copy, 0.0, d_Bx);
 
-//                // Do D*(B*(d_Wis_u_))
-//                cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_have, size_wanted, 1.0, descr, d_DMatvalPtr, d_DMatrowPtr, d_DMatcolPtr, d_Bx, 0.0, d_res);
+                // Do D*(B*(d_Wis_u_))
+                cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_have, size_wanted, 1.0, descr, d_DMatvalPtr, d_DMatrowPtr, d_DMatcolPtr, d_Bx, 0.0, d_res);
 
-//                //copy to d_res_stacked_vector
-//                cudaMemcpy(d_res_stacked +(size_have)*i,d_res,sizeof(float)*size_have,cudaMemcpyDeviceToDevice);
-//            }
+                //copy to d_res_stacked_vector
+                cudaMemcpy(d_res_stacked +(size_have)*i,d_res,sizeof(float)*size_have,cudaMemcpyDeviceToDevice);
+            }
 
 
 //            cudaMemcpy(d_res,d_fi,sizeof(float)*size_have,cudaMemcpyDeviceToDevice);
 //            cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_have, 1.0, descr, d_DMatvalPtrT, d_DMatrowPtrT, d_DMatcolPtrT, d_res, 0.0, d_Bx);
 
-//            launch_kernel_subtract(d_fi, imgVectorsStrideFloat, d_res_stacked, qVectorsStrideFloat, size_have*N_imgs, N_cols_low_img, N_rows_low_img*N_imgs);
+            launch_kernel_subtract(d_fi, imgVectorsStrideFloat, d_res_stacked, qVectorsStrideFloat, size_have*N_imgs, N_cols_low_img, N_rows_low_img*N_imgs);
 
 //            cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_wanted, 1.0, descr, d_BMatvalPtr, d_BMatrowPtr, d_BMatcolPtr, d_u, 0.0, d_Bx);
 //            cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_wanted, 1.0, descr, d_cscBMatvalPtr, d_cscBMatcolPtr,
@@ -1600,51 +1615,51 @@ int main( int argc, char* argv[] )
 //                }
 //            }
 
-            for(int i = 0 ; i < 1 ; i++ )
-            {
-                cudaMemcpy(h_AxT,d_Wiu_copy,sizeof(float)*size_wanted,cudaMemcpyDeviceToHost);
-
-                for(int row = 0 ; row < N_rows_upimg ; row++)
-                {
-                    cout<<"row value = "<<row<<endl;
-                    for(int col = 0 ; col < N_cols_upimg ; col++)
-                    {
-                        cout<<h_AxT[row*N_cols_upimg+col]<< " ";
-                    }
-                    cout<<endl;
-                }
-            }
-            exit(1);
-
-
-//            launch_kernel_q_SubtractDBWiu_fAdd_yAndReproject(d_qi, qVectorsStrideFloat,
-//                                                             d_res_stacked,qVectorsStrideFloat,
-//                                                             sigma_q,xisqr,epsilon_d,
-//                                                             N_cols_low_img, N_rows_low_img,N_imgs);
-
-
-//            for(int i = 0 ; i < N_imgs ; i++)
+//            for(int i = 0 ; i < 1 ; i++ )
 //            {
-//                //copy_qi_to_yu;
-//                cudaMemcpy(d_ydcopyqi,d_qi+(size_have)*i,sizeof(float)*size_have,cudaMemcpyDeviceToDevice);
+//                cudaMemcpy(h_AxT,d_Wiu_copy,sizeof(float)*size_wanted,cudaMemcpyDeviceToHost);
 
-//                //do D^{T}*yu;
-//                cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_have, 1.0, descr, d_DMatvalPtrT, d_DMatrowPtrT,
-//                                                    d_DMatcolPtrT, d_ydcopyqi, 0.0, d_DTqi_copy);
-
-//                //do B^{T}*(D^{T}*yu);
-//                cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_wanted, 1.0, descr, d_cscBMatvalPtr, d_cscBMatcolPtr,
-//                                                    d_cscBMatrowPtr, d_DTqi_copy, 0.0, d_BTDTqi);
-
-//                //copy the contents to d_dual_save_BTDT_q
-//                cudaMemcpy(d_dual_save_BTDTq +(size_wanted)*i,d_BTDTqi,sizeof(float)*size_wanted,cudaMemcpyDeviceToDevice);
-
+//                for(int row = 0 ; row < N_rows_upimg ; row++)
+//                {
+//                    cout<<"row value = "<<row<<endl;
+//                    for(int col = 0 ; col < N_cols_upimg ; col++)
+//                    {
+//                        cout<<h_AxT[row*N_cols_upimg+col]<< " ";
+//                    }
+//                    cout<<endl;
+//                }
 //            }
+//            exit(1);
+
+
+            launch_kernel_q_SubtractDBWiu_fAdd_yAndReproject(d_qi, qVectorsStrideFloat,
+                                                             d_res_stacked,qVectorsStrideFloat,
+                                                             sigma_q,xisqr,epsilon_d,
+                                                             N_cols_low_img, N_rows_low_img,N_imgs);
+
+
+            for(int i = 0 ; i < N_imgs ; i++)
+            {
+                //copy_qi_to_yu;
+                cudaMemcpy(d_ydcopyqi,d_qi+(size_have)*i,sizeof(float)*size_have,cudaMemcpyDeviceToDevice);
+
+                //do D^{T}*yu;
+                cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_have, 1.0, descr, d_DMatvalPtrT, d_DMatrowPtrT,
+                                                    d_DMatcolPtrT, d_ydcopyqi, 0.0, d_DTqi_copy);
+
+                //do B^{T}*(D^{T}*yu);
+                cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, size_wanted, 1.0, descr, d_cscBMatvalPtr, d_cscBMatcolPtr,
+                                                    d_cscBMatrowPtr, d_DTqi_copy, 0.0, d_BTDTqi);
+
+                //copy the contents to d_dual_save_BTDT_q
+                cudaMemcpy(d_dual_save_BTDTq +(size_wanted)*i,d_BTDTqi,sizeof(float)*size_wanted,cudaMemcpyDeviceToDevice);
+
+            }
 
 ////            // do batch Wi^{T}yu;
 
-//            cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, N_imgs*size_wanted, 1.0, descr, d_cscWMatvalPtr, d_cscWMatcolPtr, d_cscWMatrowPtr,
-//                           d_dual_save_BTDTq, 0.0, d_dual_save_WTBTDTq);
+            cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted, N_imgs*size_wanted, 1.0, descr, d_cscWMatvalPtr, d_cscWMatcolPtr, d_cscWMatrowPtr,
+                           d_dual_save_BTDTq, 0.0, d_dual_save_WTBTDTq);
 
 ////            //launch kernel u ;
 ////            // Remeber to remove this WTBTDTqStrideFloat thing!
