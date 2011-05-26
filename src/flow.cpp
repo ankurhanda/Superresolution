@@ -276,29 +276,8 @@ void buildWMatrixBilinearInterpolation(int N_imgs, int size_wanted, int N_rows_u
             for (int col = 0 ; col < N_cols_upimg ; col++)
             {
 
-//                hflow[row*N_cols_upimg+col] = ((float)(rand())/RAND_MAX)*10.0f;
-//                vflow[row*N_cols_upimg+col] = ((float)(rand())/RAND_MAX)*10.0f;
-
                 float horizontal_flow = u[col + row*N_cols_upimg];
                 float   vertical_flow = v[col + row*N_cols_upimg];
-
-//                float x_ = col*1.0f+horizontal_flow;
-//                float y_ = row*1.0f+vertical_flow;
-
-//                float xx = max(0.0f,min(N_cols_upimg-1,x_));
-//                float yy = max(0.0f,min(N_rows_upimg-1,y_));
-
-//                float x1 = max(floor(xx),0.0f);
-//                float y1 = max(floor(yy),0.0f);
-
-//                float x2  = min(x1+1,(N_cols_upimg-1)*1.0f);
-//                float y2 = min(y1+1,(N_rows_upimg-1)*1.0f);
-
-////                x_ = min(x_,(N_cols_upimg-1)*1.0f);
-////                y_ = min(y_,(N_rows_upimg-1)*1.0f);
-
-////                cout<<"( "<<x_<<", "<<y_<<") ";
-
 
                 float x_ = col*1.0f+horizontal_flow;
                 float y_ = row*1.0f+vertical_flow;
@@ -315,68 +294,54 @@ void buildWMatrixBilinearInterpolation(int N_imgs, int size_wanted, int N_rows_u
                 float x_ratio = x_ - flr_x;
                 float y_ratio = y_ - flr_y;
 
-//                float x_ratio = x2 - xx;
-//                float y_ratio = y2 - yy;
-
-//                cout<<"( "<<flr_x <<" ,"<<flr_y<<" )" ;
-//                cout<<"( "<< x_ratio <<", "<< y_ratio<<" ) "<<endl;
-
-
-                idx = (flr_y)*N_cols_upimg+ (flr_x) ;
+                idx = ((int)flr_y)*N_cols_upimg+ ((int)flr_x) ;
                 index = idx + row_index*size_wanted;
-//                cout<<"index is = "<<index<<endl;
                 indexT = idx*size_wanted + row_index;//*size_wanted;
 
-                h_vectorofMaps[img_no-1][index] = (1-x_ratio)*(1-y_ratio);
-//                cout<<"value to be stored at index"<<index<< " = "<<(x_ratio)*(y_ratio)<<endl;
-//                h_vectorofMaps[img_no-1][index] = (x_ratio)*(y_ratio);
-//                h_vectorofMaps[img_no-1][indexT] = (1-x_ratio)*(1-y_ratio);
+                //                h_vectorofMaps[img_no-1][index] = (1-x_ratio)*(1-y_ratio);
+                h_vectorofMaps[img_no-1][index] = (x_ratio)*(y_ratio);
+                //                h_vectorofMaps[img_no-1][indexT] = (1-x_ratio)*(1-y_ratio);
 
 
                 if ( flr_x+1 < N_cols_upimg )
                 {
-                    idx = (flr_y)*N_cols_upimg + (flr_x+1);
+                    idx = ((int)flr_y)*N_cols_upimg + ((int)flr_x+1);
                     index = idx + row_index*size_wanted;
                     indexT = idx*size_wanted + row_index;//*size_wanted;
 
-//                    cout<<"value to be stored at index"<<index<< " = "<<(x_ratio)*(1-y_ratio)<<endl;
                     h_vectorofMaps[img_no-1][index] = x_ratio*(1-y_ratio);
-//                    h_vectorofMaps[img_no-1][indexT] = x_ratio*(11-y_ratio);
+                    //                    h_vectorofMaps[img_no-1][indexT] = x_ratio*(1-y_ratio);
                 }
 
                 if ( flr_y+1 < N_rows_upimg)
                 {
-                    idx = (flr_y+1)*N_cols_upimg + (flr_x);
+                    idx = ((int)flr_y+1)*N_cols_upimg + ((int)flr_x);
                     index = idx + row_index*size_wanted;
                     indexT = idx*size_wanted + row_index;
 
-//                    cout<<"value to be stored at index"<<index<< " = "<<(1-x_ratio)*(y_ratio)<<endl;
                     h_vectorofMaps[img_no-1][index] = (1-x_ratio)*(y_ratio);
-//                    h_vectorofMaps[img_no-1][indexT] = (1-x_ratio)*(y_ratio);
+                    //                    h_vectorofMaps[img_no-1][indexT] = (1-x_ratio)*(y_ratio);
                 }
 
                 if ( flr_y+1 < N_rows_upimg && flr_x+1 < N_cols_upimg)
                 {
-                    idx = (flr_y+1)*N_cols_upimg + flr_x+1;
+                    idx = ((int)flr_y+1)*N_cols_upimg + ((int)flr_x+1);
                     index = idx + row_index*size_wanted;
                     indexT = idx*size_wanted + row_index;
-//                    cout<<"value to be stored at index"<<index<< " = "<<(1-x_ratio)*(1-y_ratio)<<endl;
 
-                    h_vectorofMaps[img_no-1][index] = (x_ratio)*(y_ratio);
-//                    h_vectorofMaps[img_no-1][index] = (1-x_ratio)*(1-y_ratio);
+                    h_vectorofMaps[img_no-1][index] = (1-x_ratio)*(1-y_ratio);
+                    //                    h_vectorofMaps[img_no-1][indexT] = (x_ratio)*(y_ratio);
 
                 }
-                 row_index++;
+                row_index++;
+
             }
-            cout<<endl;
 
         }
 
         cout << "Read the Matrix values" << endl;
 
     }
-
-    // Add last element as Nnz in the row index matrix
 }
 
 
