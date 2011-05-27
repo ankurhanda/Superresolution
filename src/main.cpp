@@ -939,7 +939,24 @@ int main( int argc, char* argv[] )
 
 
     cutilSafeCall(cudaMalloc((void**)&d_qi, (size_have)*sizeof(float)*N_imgs));
+    cutilSafeCall(cudaMemset(d_qi,0,(size_have)*sizeof(float)*N_imgs));
+//    cutilSafeCall(cudaMemset(d_qi,1,(size_have)*sizeof(float)*N_imgs));
+
+
     cutilSafeCall(cudaMalloc((void**)&d_res_stacked, (size_have)*sizeof(float)*N_imgs));
+
+    float *h_res_stacked = new float[size_have*N_imgs];
+    for(int i = 0 ; i < size_have*N_imgs ; i++)
+    {
+        h_res_stacked[i]=i;
+    }
+
+    cudaMemcpy(d_res_stacked,h_res_stacked,sizeof(float)*size_have*N_imgs,cudaMemcpyHostToDevice);
+    cudaMemcpy(d_qi,h_res_stacked,sizeof(float)*size_have*N_imgs,cudaMemcpyHostToDevice);
+
+
+
+//    cutilSafeCall(cudaMemset(d_res_stacked,1,sizeof(float)*size_have*N_imgs));
 
 
 
@@ -1027,6 +1044,7 @@ int main( int argc, char* argv[] )
 
 
 
+//    cutilSafeCall(cudaMemset(d_qi,1,(size_have)*sizeof(float)*N_imgs));
 
 
 //    float* h_Wiu_copy = new float[size_wanted];
@@ -1267,9 +1285,9 @@ int main( int argc, char* argv[] )
 //    cudaMemcpy(d_dual_save_WTBTDTq,h_dual_save_WTBTDTq,sizeof(float)*size_wanted,cudaMemcpyHostToDevice);
     cutilSafeCall(cudaMemset(d_dual_save_WTBTDTq,0,sizeof(float)*size_wanted));
 
-//    cutilSafeCall(cudaMemset(d_qi,1,(size_have)*sizeof(float)*N_imgs));
 
-    cutilSafeCall(cudaMemset(d_res_stacked,1,sizeof(float)*size_have*N_imgs));
+
+
 
 
 
@@ -1338,14 +1356,24 @@ int main( int argc, char* argv[] )
 
             // d_res_stacked is set to 1...!!!
 
-            launch_kernel_subtract(d_fi, imgVectorsStrideFloat, d_res_stacked, qVectorsStrideFloat, size_have*N_imgs, N_cols_low_img, N_rows_low_img*N_imgs);
+//            launch_kernel_subtract(d_fi, imgVectorsStrideFloat, d_res_stacked, qVectorsStrideFloat, size_have*N_imgs, N_cols_low_img, N_rows_low_img*N_imgs);
 
+
+
+
+
+
+
+            launch_kernel_q_SubtractDBWiu_fAdd_yAndReproject(d_qi, qVectorsStrideFloat,
+                                                             d_res_stacked,qVectorsStrideFloat,
+                                                             sigma_q,xisqr,epsilon_d,
+                                                             N_cols_low_img, N_rows_low_img,N_imgs);
 
 
             for(int i = 0 ; i < 1 ; i++ )
             {
 
-                cudaMemcpy(h_qi,d_res_stacked+(size_have)*i,sizeof(float)*size_have,cudaMemcpyDeviceToHost);
+                cudaMemcpy(h_qi,d_qi+(size_have)*i,sizeof(float)*size_have,cudaMemcpyDeviceToHost);
 
                 for(int row = 0 ; row < N_rows_low_img ; row++)
                 {
@@ -1359,14 +1387,6 @@ int main( int argc, char* argv[] )
 
             }
             exit(1);
-
-
-
-//            launch_kernel_q_SubtractDBWiu_fAdd_yAndReproject(d_qi, qVectorsStrideFloat,
-//                                                             d_res_stacked,qVectorsStrideFloat,
-//                                                             sigma_q,xisqr,epsilon_d,
-//                                                             N_cols_low_img, N_rows_low_img,N_imgs);
-
 
 
 //            for(int i = 0 ; i < N_imgs ; i++)
