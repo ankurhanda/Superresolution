@@ -63,8 +63,6 @@ __global__ void kernel_primalu(float *px, float *py, float* u_, float *u, int up
     unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
 
     // write output vertex
-
-
     if ( y*width_up+x < width_up*height_up)
     {
 
@@ -78,19 +76,9 @@ __global__ void kernel_primalu(float *px, float *py, float* u_, float *u, int up
 
         float prev_u = u[y*width_up+x];
 
-
-        float sum_WiT_BiT_DiT_qi = 0;
-        int image_size = width_up*height_up;
-
-        for(int i = 0 ; i < N_imgs; i++)
-        {
-            sum_WiT_BiT_DiT_qi += WiT_BiT_DiT_qi[y*width_up+x + (image_size*i)];
-        }
-
-
         float tau = d_tau[y*width_up+x];
 
-        u[y*width_up+x]  = prev_u - tau*( -divp + 1.0f*sum_WiT_BiT_DiT_qi);
+        u[y*width_up+x]  = prev_u - tau*( -divp + WiT_BiT_DiT_qi[y*width_up+x]);
 
         u_[y*width_up+x] = 2*u[y*width_up+x] - prev_u;
     }
