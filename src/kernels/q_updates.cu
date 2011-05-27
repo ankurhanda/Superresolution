@@ -38,7 +38,7 @@ __global__ void kernel_q_SubtractDBWiu_fAdd_yAndReproject(float *d_qi, int qStri
             cuPrintf("d_qi[tid]=%f\n", d_qi[tid]);
         }
        float result_val = d_qi[tid] + sigma_q*(d_DBWiu_fi[tid]);
-//       result_val = max(-1.0f, min(1.0f, result_val));
+       result_val = max(-1.0f, min(1.0f, result_val));
        d_qi[tid] = result_val;
     }
 
