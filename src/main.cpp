@@ -1361,14 +1361,8 @@ int main( int argc, char* argv[] )
             // d_res_stacked is set to 1...!!!
 
             cout<<"Going to do subtration!"<<endl;
+
             launch_kernel_subtract(d_fi, imgVectorsStrideFloat, d_res_stacked, qVectorsStrideFloat, size_have*N_imgs, N_cols_low_img, N_rows_low_img*N_imgs);
-
-
-
-
-
-
-
             launch_kernel_q_SubtractDBWiu_fAdd_yAndReproject(d_qi, qVectorsStrideFloat,
                                                              d_res_stacked,qVectorsStrideFloat,
                                                              sigma_q,xisqr,epsilon_d,
@@ -1464,16 +1458,52 @@ int main( int argc, char* argv[] )
 
             CVD::Image<CVD::byte>img2store = CVD::Image<CVD::byte>(ImageRef(N_cols_upimg,N_rows_upimg));
 
+            float maxval = -99;
+            float minval =  99;
+
             for(int row = 0 ; row < N_rows_upimg; row++)
             {
 //                cout<<"row = "<<row<<endl;
                 for(int col = 0 ; col < N_cols_upimg; col++)
                 {
-                    img2store[ImageRef(col,row)] = (unsigned char)(h_AxT[row*N_cols_upimg+col]*255.0f);
+//                    img2store[ImageRef(col,row)] = (unsigned char)(h_AxT[row*N_cols_upimg+col]*255.0f);
+
+                    if( maxval < h_AxT[row*N_cols_upimg+col])
+                    {
+                        maxval = h_AxT[row*N_cols_upimg+col];
+                    }
+
+                    if( minval > h_AxT[row*N_cols_upimg+col])
+                    {
+                        minval = h_AxT[row*N_cols_low_img+col];
+                    }
 //                    cout<<h_AxT[row*N_cols_upimg+col]<<" ";
                 }
-                cout<<endl;
+//                cout<<endl;
             }
+
+
+
+
+            for(int row = 0 ; row < N_rows_upimg; row++)
+            {
+//                cout<<"row = "<<row<<endl;
+                for(int col = 0 ; col < N_cols_upimg; col++)
+                {
+                    img2store[ImageRef(col,row)] = (unsigned char)((h_AxT[row*N_cols_upimg+col]-minval)*255.0f/(maxval - minval));
+
+//                    cout<<h_AxT[row*N_cols_upimg+col]<<" ";
+                }
+//                cout<<endl;
+            }
+
+
+
+
+
+
+
+
             static int imgno=0;
             char superfileName[34];
             sprintf(superfileName,"super_resolution_%03d.png",imgno++);
