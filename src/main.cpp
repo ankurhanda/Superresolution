@@ -41,8 +41,8 @@ using namespace CVD;
 
 
 
-extern "C" void launch_kernel_primal_u(float *px, float *py, float* u_, float *u, int upImageStrideFloat, float epsilon_u, float* d_tau, float xisqr, float *WiT_BiT_DiT_qi,
-                                       unsigned int WTBTDTstride, unsigned int width_up, unsigned int height_up, int N_imgs);
+//extern "C" void launch_kernel_primal_u(float *px, float *py, float* u_, float *u, int upImageStrideFloat, float epsilon_u, float* d_tau, float xisqr, float *WiT_BiT_DiT_qi,
+//                                       unsigned int WTBTDTstride, unsigned int width_up, unsigned int height_up, int N_imgs);
 
 //extern "C" void launch_kernel_q_SubtractDBWiu_fAdd_yAndReproject(float *d_qi, int qStride,
 //                                                                 float *d_DBWiu_fi, int DBWiu_fiStride,
@@ -69,6 +69,9 @@ extern "C" void launch_kernel_derivative_u(float* ux_, float *uy_, float* u_, un
 
 extern "C" void  launch_kernel_subtract(float* d_fi, int imgVectorsStrideFloat, float* d_res_stacked, int qVectorsStrideFloat, int size, int width, int height);
 
+
+extern "C" void launch_kernel_primal_u(float *px, float *py, float* u_, float *u, int upImageStrideFloat, float epsilon_u, float* d_tau, float xisqr, float lambda,
+                                       float *WiT_BiT_DiT_qi, unsigned int WTBTDTstride, unsigned int width_up, unsigned int height_up, int N_imgs);
 
 //extern "C" void launch_kernel_dual_variable_p(float *px, float *py, float* ux_, float *uy_, float epsilon_u, float sigma_p, float lambda,
 //                                              unsigned int stride, unsigned int mesh_width, unsigned int mesh_height)
@@ -202,113 +205,234 @@ int main( int argc, char* argv[] )
 
 
 
-    float *h_csrWMatStackedval = new float[total_nonzeros];
-    int *h_csrWMatStackedrow = new int[size_wanted*N_imgs+1];
-    int *h_csrWMatStackedcol = new int[total_nonzeros];
+//    float *h_csrWMatStackedval = new float[total_nonzeros];
+//    int *h_csrWMatStackedrow = new int[size_wanted*N_imgs+1];
+//    int *h_csrWMatStackedcol = new int[total_nonzeros];
 
 
-    float *d_WMatvalPtr;
-    int *d_WMatrowPtr;
-    int *d_WMatcolPtr;
+//    float *d_WMatvalPtr;
+//    int *d_WMatrowPtr;
+//    int *d_WMatcolPtr;
 
 
-    for(int i = 0 ; i < N_imgs ; i++)
+//    for(int i = 0 ; i < N_imgs ; i++)
+//    {
+//        std::map<int, float>::iterator it;
+//        std::map<int, float> mapW = h_vectorofMaps[i];
+
+//        int NnzWMat = (int)mapW.size();
+
+//        WMatvalPtr[i] = new float[NnzWMat];
+//        WMatcolPtr[i] = new int[NnzWMat];
+//        WMatrowPtr[i] = new int[size_wanted+1];
+//        h_nnzPerRow[i] = new int[size_wanted];
+
+//        int index = 0, prev_row=-1;
+
+//        cout<< "NnzWMat = "<<NnzWMat <<endl;
+
+//        WMatrowPtr[i][0] = 0;
+//        h_nnzPerRow[i][0] = 0;
+
+//        for(int j = 1 ; j < size_wanted; j++)
+//        {
+//            WMatrowPtr[i][j] =-1;
+//            h_nnzPerRow[i][j] = 0;
+//        }
+//        WMatrowPtr[i][size_wanted] = NnzWMat;
+
+//        cout<<"have initialised the matrices"<<endl;
+
+//        index = 0;
+//        for(it = mapW.begin(); it != mapW.end() ; it++)
+//        {
+
+//            WMatcolPtr[i][index] = (it->first)%size_wanted;
+//            WMatvalPtr[i][index] = (it->second);
+
+//            int row = ((it->first) - (it->first)%size_wanted)/size_wanted;
+//            h_nnzPerRow[i][row]++;
+
+//            if ( WMatrowPtr[i][row] == -1 && prev_row != row)
+//            {
+//                WMatrowPtr[i][row] = index;
+//                prev_row = row;
+//            }
+//            index++;
+
+//        }
+
+//        index = 1;
+//        while(1)
+//        {
+//            if( index > size_wanted)
+//                break;
+
+//            int startindex = index;
+//            while( WMatrowPtr[i][index] == -1)
+//            {
+//                index++;
+//            }
+//            for(int j = startindex; j <= index-1 ; j++)
+//            {
+//                WMatrowPtr[i][j] = WMatrowPtr[i][index];
+//            }
+//            index++;
+//        }
+//        WMatrowPtr[i][0] = 0;
+
+
+//        if ( i == 0)
+//        {
+
+//            cutilSafeCall(cudaMalloc((void**)&d_WMatvalPtr, NnzWMat*sizeof (float)));
+//            cutilSafeCall(cudaMalloc((void**)&d_WMatcolPtr, (NnzWMat)*sizeof(int)));
+//            cutilSafeCall(cudaMalloc((void**)&d_WMatrowPtr, (size_wanted+1)*sizeof (int)));
+
+//            cudaMemcpy(d_WMatvalPtr, WMatvalPtr[i], NnzWMat*sizeof(float), cudaMemcpyHostToDevice);
+//            cudaMemcpy(d_WMatcolPtr, WMatcolPtr[i], NnzWMat*sizeof(int), cudaMemcpyHostToDevice);
+//            cudaMemcpy(d_WMatrowPtr, WMatrowPtr[i], (size_wanted+1)*sizeof(int), cudaMemcpyHostToDevice);
+
+//        }
+
+//        static int total_non_zeros_so_far = 0;
+
+//        for(int index = 0 ; index < NnzWMat ; index++)
+//        {
+//            h_csrWMatStackedval[total_non_zeros_so_far + index] = WMatvalPtr[i][index];
+//            h_csrWMatStackedcol[total_non_zeros_so_far + index] = WMatcolPtr[i][index];
+//        }
+
+//        for(int rv = 0 ; rv < size_wanted ; rv++)
+//        {
+//            h_csrWMatStackedrow[rv+size_wanted*i] = WMatrowPtr[i][rv] + total_non_zeros_so_far;
+//        }
+
+//        total_non_zeros_so_far = total_non_zeros_so_far +NnzWMat;
+//    }
+
+//    h_csrWMatStackedrow[size_wanted*N_imgs] = total_nonzeros;
+
+
+
+
+
+
+//    for(int i = 0 ; i < N_imgs ; i++)
+//    {
+//        cout<<"WMatval, i = "<<i<<endl;
+
+//        int NnzWMat = h_vectorofMaps[i].size();
+
+//        char filevalname[50];
+//        sprintf(filevalname,"WMatval_%d.txt",i);
+//        ofstream wMatfileval(filevalname);
+
+//        for(int j = 0 ; j < NnzWMat ; j++ )
+//        {
+//            wMatfileval << WMatvalPtr[i][j] << " ";
+//        }
+//        wMatfileval.close();
+
+
+//        char filecolname[50];
+//        sprintf(filecolname,"WMatcol_%d.txt",i);
+//        ofstream wMatfilecol(filecolname);
+//        for(int j = 0 ; j < NnzWMat ; j++ )
+//        {
+//            wMatfilecol<<WMatcolPtr[i][j] << "  ";
+//        }
+//        wMatfilecol.close();
+
+//        char filerowname[50];
+//        sprintf(filerowname,"WMatrow_%d.txt",i);
+//        ofstream wMatfilerow(filerowname);
+//        for(int j = 0 ; j < size_wanted+1 ; j++ )
+//        {
+//            wMatfilerow<<WMatrowPtr[i][j] << "  ";
+//        }
+//        wMatfilerow.close();
+
+//    }
+
+
+
+
+    ifstream Waifile("WStackai.txt");
+    float aival;
+    int total_nonzeros_wi=0;
+    while(1)
     {
-        std::map<int, float>::iterator it;
-        std::map<int, float> mapW = h_vectorofMaps[i];
+        Waifile >> aival;
+        if ( Waifile.eof())
+            break;
+        total_nonzeros_wi++;
 
-        int NnzWMat = (int)mapW.size();
-
-        WMatvalPtr[i] = new float[NnzWMat];
-        WMatcolPtr[i] = new int[NnzWMat];
-        WMatrowPtr[i] = new int[size_wanted+1];
-        h_nnzPerRow[i] = new int[size_wanted];
-
-        int index = 0, prev_row=-1;
-
-        cout<< "NnzWMat = "<<NnzWMat <<endl;
-
-        WMatrowPtr[i][0] = 0;
-        h_nnzPerRow[i][0] = 0;
-
-        for(int j = 1 ; j < size_wanted; j++)
-        {
-            WMatrowPtr[i][j] =-1;
-            h_nnzPerRow[i][j] = 0;
-        }
-        WMatrowPtr[i][size_wanted] = NnzWMat;
-
-        cout<<"have initialised the matrices"<<endl;
-
-        index = 0;
-        for(it = mapW.begin(); it != mapW.end() ; it++)
-        {
-
-            WMatcolPtr[i][index] = (it->first)%size_wanted;
-            WMatvalPtr[i][index] = (it->second);
-
-            int row = ((it->first) - (it->first)%size_wanted)/size_wanted;
-            h_nnzPerRow[i][row]++;
-
-            if ( WMatrowPtr[i][row] == -1 && prev_row != row)
-            {
-                WMatrowPtr[i][row] = index;
-                prev_row = row;
-            }
-            index++;
-
-        }
-
-        index = 1;
-        while(1)
-        {
-            if( index > size_wanted)
-                break;
-
-            int startindex = index;
-            while( WMatrowPtr[i][index] == -1)
-            {
-                index++;
-            }
-            for(int j = startindex; j <= index-1 ; j++)
-            {
-                WMatrowPtr[i][j] = WMatrowPtr[i][index];
-            }
-            index++;
-        }
-        WMatrowPtr[i][0] = 0;
-
-
-        if ( i == 0)
-        {
-
-            cutilSafeCall(cudaMalloc((void**)&d_WMatvalPtr, NnzWMat*sizeof (float)));
-            cutilSafeCall(cudaMalloc((void**)&d_WMatcolPtr, (NnzWMat)*sizeof(int)));
-            cutilSafeCall(cudaMalloc((void**)&d_WMatrowPtr, (size_wanted+1)*sizeof (int)));
-
-            cudaMemcpy(d_WMatvalPtr, WMatvalPtr[i], NnzWMat*sizeof(float), cudaMemcpyHostToDevice);
-            cudaMemcpy(d_WMatcolPtr, WMatcolPtr[i], NnzWMat*sizeof(int), cudaMemcpyHostToDevice);
-            cudaMemcpy(d_WMatrowPtr, WMatrowPtr[i], (size_wanted+1)*sizeof(int), cudaMemcpyHostToDevice);
-
-        }
-
-        static int total_non_zeros_so_far = 0;
-
-        for(int index = 0 ; index < NnzWMat ; index++)
-        {
-            h_csrWMatStackedval[total_non_zeros_so_far + index] = WMatvalPtr[i][index];
-            h_csrWMatStackedcol[total_non_zeros_so_far + index] = WMatcolPtr[i][index];
-        }
-
-        for(int rv = 0 ; rv < size_wanted ; rv++)
-        {
-            h_csrWMatStackedrow[rv+size_wanted*i] = WMatrowPtr[i][rv] + total_non_zeros_so_far;
-        }
-
-        total_non_zeros_so_far = total_non_zeros_so_far +NnzWMat;
     }
+    Waifile.close();
 
-    h_csrWMatStackedrow[size_wanted*N_imgs] = total_nonzeros;
+    float *h_csrWMatStackedval = new float[total_nonzeros_wi];
+    int *h_csrWMatStackedrow = new int[size_wanted*N_imgs+1];
+    int *h_csrWMatStackedcol = new int[total_nonzeros_wi];
+
+
+    Waifile.open("WStackai.txt");
+    int aipos=0;
+    while(1)
+    {
+        Waifile >> aival;
+        if ( Waifile.eof())
+            break;
+        h_csrWMatStackedval[aipos]= aival;
+        aipos++;
+    }
+    Waifile.close();
+
+    ifstream Wrpfile("WStackrp.txt");
+    int rppos=0;
+    while(1)
+    {
+        Wrpfile >> aival;
+        if ( Wrpfile.eof())
+            break;
+        h_csrWMatStackedrow[rppos]= (int)aival;
+        rppos++;
+    }
+    Wrpfile.close();
+
+
+    ifstream Wcifile("WStackci.txt");
+    int cipos=0;
+    while(1)
+    {
+        Wcifile >> aival;
+        if ( Wcifile.eof())
+            break;
+        h_csrWMatStackedcol[cipos]= (int)aival;
+        cipos++;
+    }
+    Wcifile.close();
+
+
+
+    total_nonzeros  = total_nonzeros_wi;
+    cout<<"total_nonzeros_wi = "<<total_nonzeros_wi<<endl;
+//    cout<<"total_nonzeros = "<<total_nonzeros<<endl;
+
+
+
+
+//    exit(1);
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -446,6 +570,44 @@ int main( int argc, char* argv[] )
     }
     cout << endl;
 
+
+
+
+
+    cout<<"DMatval "<<endl;
+    ofstream dMatfileval("DMatval.txt");
+    for(int i = 0 ; i < NnzDMat ; i++ )
+    {
+        dMatfileval << DMatvalPtr[i] << " ";
+    }
+    dMatfileval.close();
+
+
+    cout<<"BMatcol "<<endl;
+    ofstream dMatfilecol("DMatcol.txt");
+    for(int i = 0 ; i < NnzDMat ; i++ )
+    {
+        dMatfilecol<<DMatcolPtr[i] << "  ";
+    }
+    dMatfilecol.close();
+
+
+    ofstream dMatfilerow("DMatrow.txt");
+    cout<<"BMatrow "<<endl;
+    for(int i = 0 ; i < size_have+1 ; i++ )
+    {
+        dMatfilerow<<DMatrowPtr[i] << " ";
+    }
+    dMatfilerow.close();
+
+
+
+
+
+
+
+
+
   //######################################################################################
 
 
@@ -533,6 +695,34 @@ int main( int argc, char* argv[] )
     cout << endl;
 
 
+    cout<<"BMatval "<<endl;
+    ofstream bMatfileval("BMatval.txt");
+    for(int i = 0 ; i < NnzBlurMat ; i++ )
+    {
+        bMatfileval << BMatvalPtr[i] << " ";
+    }
+    bMatfileval.close();
+
+
+    cout<<"BMatcol "<<endl;
+    ofstream bMatfilecol("BMatcol.txt");
+    for(int i = 0 ; i < NnzBlurMat ; i++ )
+    {
+        bMatfilecol<<BMatcolPtr[i] << "  ";
+    }
+    bMatfilecol.close();
+
+
+    ofstream bMatfilerow("BMatrow.txt");
+    cout<<"BMatrow "<<endl;
+    for(int i = 0 ; i < size_wanted+1 ; i++ )
+    {
+        bMatfilerow<<BMatrowPtr[i] << " ";
+    }
+    bMatfilerow.close();
+
+
+
    //##########################################################################################
 
 
@@ -575,12 +765,13 @@ int main( int argc, char* argv[] )
 
 
     // Remember this is csc so col and rows are swapped!
-    cutilSafeCall(cudaMalloc((void**)&d_cscWMatvalPtr, total_nonzeros*sizeof (float)));
-    cutilSafeCall(cudaMalloc((void**)&d_cscWMatrowPtr, (total_nonzeros)*sizeof(int)));
+    cutilSafeCall(cudaMalloc((void**)&d_cscWMatvalPtr, total_nonzeros_wi*sizeof (float)));
+    cutilSafeCall(cudaMalloc((void**)&d_cscWMatrowPtr, (total_nonzeros_wi)*sizeof(int)));
     cutilSafeCall(cudaMalloc((void**)&d_cscWMatcolPtr, (size_wanted+1)*sizeof (int)));
 
 
 
+    // Conversion required to compute the W^{T}
 
     {
         ScopedCuTimer cuTime("csr2csc conversion time");
@@ -671,7 +862,6 @@ int main( int argc, char* argv[] )
 
 
     cutilSafeCall(cudaMalloc((void**)&d_A_copy, (size_have)*sizeof(float)*size_wanted));
-//    cutilSafeCall(cudaMalloc((void**)&d_img, sizeof(float)*size_wanted));
     cutilSafeCall(cudaMallocPitch(&d_img,&upImageFloatPitch,sizeof(float)*N_cols_upimg,N_rows_upimg));
 
 
@@ -793,6 +983,7 @@ int main( int argc, char* argv[] )
         img_save(WarpedImage,fileName);
     }
 
+//    exit(1);
 
     cout<< "After initialising the image!"<<endl;
 
@@ -916,22 +1107,14 @@ int main( int argc, char* argv[] )
     cutilSafeCall(cudaMalloc((void**)&d_BTDTqi, size_wanted*sizeof (float)));
 
 
-
-
-
     cutilSafeCall(cudaMalloc((void**)&d_Wiu_, size_wanted*sizeof (float)));
     cutilSafeCall(cudaMalloc((void**)&d_Wiu_copy, size_wanted*sizeof (float)));
-
-
 
     cutilSafeCall(cudaMalloc((void**)&d_res, size_have*sizeof (float)));
 
 
     cutilSafeCall(cudaMalloc((void**)&d_fi, size_have*N_imgs*sizeof (float)));
     cutilSafeCall(cudaMalloc((void**)&d_dual_save_WTBTDTq, size_wanted*sizeof (float)));
-
-
-
 
 
     cutilSafeCall(cudaMalloc((void**)&d_dual_save_BTDTq, (size_wanted)*sizeof(float)*N_imgs));
@@ -1324,18 +1507,15 @@ int main( int argc, char* argv[] )
             cout<< "sigma_p = "<<sigma_p <<endl;
             cout<<"lambda = "<<lambda<<endl;
 
-            cout<<"Launching Kernel derivatives!"<<endl;
             launch_kernel_derivative_u(d_ux_,d_uy_,d_u_,stride,width_up, height_up);
 
-
-            cout<<"Launching Primal variable p"<<endl;
             launch_kernel_dual_variable_p(d_px,d_py,d_ux_,d_uy_,epsilon_u, sigma_p, lambda, upImageStrideFloat,width_up,height_up);
 
-//            // What is that we want to try out in this image?
-//            // We want to do the optimisation steps with respect to q
-//            // That is:
-//            // q^{n+1} = \frac{q^n + \sigma \xi^{2} (DBWu_ - f)}{ 1 + epsilon_d*sigma_q/xisqr}
-//            // q^{n+1} =  max(-xisqr, min(xisqr, q^{n+1}))
+            // What is that we want to try out in this image?
+            // We want to do the optimisation steps with respect to q
+            // That is:
+            // q^{n+1} = \frac{q^n + \sigma \xi^{2} (DBWu_ - f)}{ 1 + epsilon_d*sigma_q/xisqr}
+            // q^{n+1} =  max(-xisqr, min(xisqr, q^{n+1}))
 
             cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, size_wanted*N_imgs, size_wanted, 1.0, descr, d_csrWMatStackedval,
                                                             d_csrWMatStackedrow, d_csrWMatStackedcol, d_u_, 0.0, d_Wis_u_);
@@ -1358,6 +1538,40 @@ int main( int argc, char* argv[] )
 
 
 
+//            for (int i = 0 ; i < N_imgs ; i++)
+//            {
+//                // copy
+//                cudaMemcpy(h_Ax,d_res_stacked+(size_have)*i,sizeof(float)*size_have,cudaMemcpyDeviceToHost);
+
+////                CVD::Image<CVD::byte>img2generate = CVD::Image<CVD::byte>(ImageRef(N_cols_low_img,N_rows_low_img));
+
+//                char DBWfileName[40];
+//                sprintf(DBWfileName,"DBWfile_%d.txt",i);
+//                ofstream DBWfile(DBWfileName);
+
+//                for(int row = 0 ; row < N_rows_low_img; row++)
+//                {
+//                    for(int col = 0 ; col < N_cols_low_img; col++)
+//                    {
+//                        DBWfile<<h_Ax[row*N_cols_low_img+col]<<" ";
+////                        img2generate[ImageRef(col,row)] = (unsigned char)(h_Ax[row*N_cols_low_img+col]*255.0f);
+//                    }
+//                    DBWfile<<endl;
+//                }
+//                DBWfile.close();
+
+////                static int imgno=0;
+////                char downfileName[34];
+////                sprintf(downfileName,"DBWImageCUDA_%03d.png",imgno++);
+////                img_save(img2generate,downfileName);
+////                cout<<"d_u is printed!"<<endl;
+//            }
+//            exit(1);
+
+
+
+
+
             // d_res_stacked is set to 1...!!!
 
             cout<<"Going to do subtration!"<<endl;
@@ -1367,30 +1581,6 @@ int main( int argc, char* argv[] )
                                                              d_res_stacked,qVectorsStrideFloat,
                                                              sigma_q,xisqr,epsilon_d,
                                                              N_cols_low_img, N_rows_low_img,N_imgs);
-
-
-//            CVD::Image<CVD::byte> DBWImage = CVD::Image<CVD::byte>(ImageRef(N_cols_low_img,N_rows_low_img));
-//            for(int i = 0 ; i < N_imgs ; i++ )
-//            {
-
-//                cudaMemcpy(h_qi,d_res_stacked+(size_have)*i,sizeof(float)*size_have,cudaMemcpyDeviceToHost);
-
-//                for(int row = 0 ; row < N_rows_low_img ; row++)
-//                {
-//                    cout<<"row = "<<row<<endl;
-//                    for(int col = 0 ; col < N_cols_low_img ; col++)
-//                    {
-////                        cout<< h_qi[row*N_cols_low_img+col]<< " ";
-//                        DBWImage[ImageRef(col,row)] = (unsigned char)(h_qi[row*N_cols_low_img+col]*255.0f);
-//                    }
-//                    cout<<endl;
-//                }
-
-//                char filename[40];
-//                sprintf(filename,"DBWImage_%03d.png",i+1);
-//                img_save(DBWImage,filename);
-//            }
-//            exit(1);
 
 
             for(int i = 0 ; i < N_imgs ; i++)
@@ -1411,37 +1601,6 @@ int main( int argc, char* argv[] )
 
             }
 
-//            float *h_BTDTq = new float[size_wanted];
-
-//            for(int i = 0 ; i < N_imgs; i++ )
-//            {
-
-//                cout<<"############################################ qi = "<<i<<"############################################"<<endl;
-
-
-//                cudaMemcpy(h_BTDTq,d_dual_save_BTDTq+(size_wanted)*i,sizeof(float)*size_wanted,cudaMemcpyDeviceToHost);
-
-//                for(int row = 0 ; row < N_rows_upimg; row++)
-//                {
-//                    cout<<"row = "<<row<<endl;
-//                    for(int col = 0 ; col < N_cols_upimg; col++)
-//                    {
-//                        cout<<h_BTDTq[row*N_cols_upimg+col]<<" ";
-////                        imgqi[ImageRef(col,row)] = (unsigned char)(h_qi[row*N_cols_low_img+col]*255.0f);
-//                    }
-//                    cout<<endl;
-//                }
-
-
-//                 char qifilename[34];
-//                 sprintf(qifilename,"qiimg_%03d.png",i);
-//                 img_save(imgqi,qifilename);
-
-//            }
-
-
-
-
 
             // do batch Wi^{T}yu;
 
@@ -1450,10 +1609,7 @@ int main( int argc, char* argv[] )
 
             //launch kernel u ;
             // Remeber to remove this WTBTDTqStrideFloat thing!
-
-
-
-            launch_kernel_primal_u(d_px,d_py,d_u_,d_u, upImageStrideFloat, epsilon_u,d_tau,xisqr, d_dual_save_WTBTDTq, WTBTDTqStrideFloat,width_up,height_up,N_imgs);
+            launch_kernel_primal_u(d_px,d_py,d_u_,d_u, upImageStrideFloat, epsilon_u,d_tau,xisqr, lambda, d_dual_save_WTBTDTq, WTBTDTqStrideFloat,width_up,height_up,N_imgs);
             cudaMemcpy(h_AxT,d_u,sizeof(float)*size_wanted,cudaMemcpyDeviceToHost);
 
             CVD::Image<CVD::byte>img2store = CVD::Image<CVD::byte>(ImageRef(N_cols_upimg,N_rows_upimg));
@@ -1463,11 +1619,8 @@ int main( int argc, char* argv[] )
 
             for(int row = 0 ; row < N_rows_upimg; row++)
             {
-//                cout<<"row = "<<row<<endl;
                 for(int col = 0 ; col < N_cols_upimg; col++)
                 {
-//                    img2store[ImageRef(col,row)] = (unsigned char)(h_AxT[row*N_cols_upimg+col]*255.0f);
-
                     if( maxval < h_AxT[row*N_cols_upimg+col])
                     {
                         maxval = h_AxT[row*N_cols_upimg+col];
@@ -1475,89 +1628,29 @@ int main( int argc, char* argv[] )
 
                     if( minval > h_AxT[row*N_cols_upimg+col])
                     {
-                        minval = h_AxT[row*N_cols_low_img+col];
+                        minval = h_AxT[row*N_cols_upimg+col];
                     }
-//                    cout<<h_AxT[row*N_cols_upimg+col]<<" ";
                 }
-//                cout<<endl;
             }
+
 
 
 
 
             for(int row = 0 ; row < N_rows_upimg; row++)
             {
-//                cout<<"row = "<<row<<endl;
                 for(int col = 0 ; col < N_cols_upimg; col++)
                 {
                     img2store[ImageRef(col,row)] = (unsigned char)((h_AxT[row*N_cols_upimg+col]-minval)*255.0f/(maxval - minval));
 
-//                    cout<<h_AxT[row*N_cols_upimg+col]<<" ";
                 }
-//                cout<<endl;
             }
-
-
-
-
-
-
-
 
             static int imgno=0;
             char superfileName[34];
             sprintf(superfileName,"super_resolution_%03d.png",imgno++);
             img_save(img2store,superfileName);
             cout<<"d_u is printed!"<<endl;
-//            exit(1);
-
-
-
-
-
-////            char iteration_filename[20];
-////            sprintf(iteration_filename,"u_it_%ld.txt",doIt+1);
-////            ifstream u_it_file(iteration_filename);
-////            float* u_it = new float[size_wanted];
-
-////            while(1)
-////            {
-////                u_it_file.getline(readlinedata, 300);
-////                if ( u_it_file.eof())
-////                    break;
-
-////                istringstream iss(readlinedata);
-
-////                float val;
-////                iss >> val;
-
-////                static int pos = 0;
-
-////                u_it[pos] = val;
-////                pos++;
-////            }
-
-
-
-//            CVD::Image<CVD::byte>DTImage = CVD::Image<CVD::byte>(ImageRef(N_cols_upimg,N_rows_upimg));
-
-
-//            for(int row = 0 ; row < N_rows_upimg ; row++)
-//            {
-//                for(int col = 0 ; col < N_cols_upimg ; col++)
-//                {
-////                    cout<< "(" << u_it[col*N_rows_upimg+row]<< ", "<< h_AxT[row*N_cols_upimg+col]<<")";
-//                    DTImage[ImageRef(col,row)] = (unsigned char)(h_AxT[row*N_cols_upimg+col]*255.0f);
-//                }
-////                cout<<endl;
-//            }
-
-//            static long slimage =0;
-//            char fileName[30];
-
-//            sprintf(fileName,"SuperResolutionImage_%d.png",slimage++);
-//            img_save(DTImage,fileName);
-
 
         }
         doIt++;
