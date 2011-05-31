@@ -1636,6 +1636,8 @@ int main( int argc, char* argv[] )
 
 
 
+            cout<<"minval = "<<minval<<endl;
+            cout<<"maxval = "<<maxval<<endl;
 
             for(int row = 0 ; row < N_rows_upimg; row++)
             {
